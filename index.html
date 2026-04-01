@@ -1,0 +1,4214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><rect fill='%232c5aa0' width='180' height='180'/><text x='90' y='100' text-anchor='middle' fill='white' font-size='80' font-family='sans-serif'>📋</text></svg>">
+  <title>支援記録管理システム - ログイン</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" 
+    onerror="console.log('QR CDN unavailable, using fallback')"
+    onload="window._qrcdnLoaded=true"></script>
+  <style>
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+    }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'メイリオ', 'Meiryo', sans-serif;
+      padding: 10px; 
+      background: #f5f5f5;
+      margin: 0;
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+    
+    /* ログイン画面 */
+    .login-screen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+    
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .login-header h1 {
+      color: #2c5aa0;
+      margin: 0 0 10px 0;
+      font-size: 1.8em;
+    }
+    
+    .login-header p {
+      color: #666;
+      margin: 0;
+      font-size: 0.9em;
+    }
+    
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-group label {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    .form-group input {
+      padding: 14px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      transition: border-color 0.3s;
+      min-height: 48px;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #2c5aa0;
+    }
+    
+    .btn-login {
+      background: #2c5aa0;
+      color: white;
+      padding: 16px;
+      font-size: 18px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+      min-height: 54px;
+    }
+    
+    .btn-login:hover {
+      background: #1e3c70;
+    }
+    
+    .login-error {
+      background: #fee;
+      color: #c33;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #fcc;
+      font-size: 14px;
+      display: none;
+    }
+    
+    /* メイン画面 */
+    .main-screen {
+      display: none;
+    }
+    
+    .main-screen.active {
+      display: block;
+    }
+    
+    /* ヘッダー */
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 1.5em;
+      flex: 1;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.95em;
+    }
+    
+    .btn-logout {
+      background: rgba(255,255,255,0.3);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9em;
+      transition: background 0.3s;
+      min-height: 36px;
+    }
+    
+    .btn-logout:hover {
+      background: rgba(255,255,255,0.5);
+    }
+    
+    h2 { 
+      color: #2c5aa0;
+      border-left: 4px solid #2c5aa0;
+      padding-left: 10px;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+    
+    .btn {
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-height: 48px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    
+    /* ボタンスタイル */
+    .btn-add { background: #4CAF50; color: white; }
+    .btn-add:hover { background: #45a049; transform: translateY(-2px); }
+    .btn-add:active { transform: translateY(0); }
+    
+    .btn-save { background: #2196F3; color: white; }
+    .btn-save:hover { background: #0b7dda; }
+    
+    .btn-export { background: #FF9800; color: white; }
+    .btn-export:hover { background: #e68900; }
+    
+    .btn-clear { background: #f44336; color: white; }
+    .btn-clear:hover { background: #da190b; }
+    
+    .btn-cancel { background: #999; color: white; }
+    .btn-cancel:hover { background: #777; }
+    
+    .btn-master { background: #9C27B0; color: white; }
+    .btn-master:hover { background: #7B1FA2; }
+    
+    .btn-sync { background: #00BCD4; color: white; }
+    .btn-sync:hover { background: #00ACC1; }
+    
+    .btn-remove { background: #ff5722; color: white; padding: 8px 16px; font-size: 14px; }
+    .btn-remove:hover { background: #e64a19; }
+    
+    .btn-voice { 
+      background: #673AB7; 
+      color: white; 
+      padding: 6px 12px; 
+      font-size: 14px; 
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+    .btn-voice:hover { background: #5E35B1; }
+    
+    .btn-toggle {
+      background: #607D8B;
+      color: white;
+      width: 100%;
+      margin: 15px 0;
+      font-size: 15px;
+    }
+    .btn-toggle:hover {
+      background: #546E7A;
+    }
+    .btn-toggle.active {
+      background: #E91E63;
+    }
+    
+    /* 一括入力ボタン（NEW） */
+    .btn-batch { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; 
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+    }
+    .btn-batch:hover { 
+      box-shadow: 0 6px 20px rgba(102,126,234,0.6);
+      transform: translateY(-2px);
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    /* 一括入力モーダル（NEW） */
+    .batch-modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      overflow: auto;
+    }
+    
+    .batch-modal-content {
+      background-color: #fff;
+      margin: 3% auto;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    
+    .batch-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #eee;
+    }
+    
+    .batch-header h2 {
+      margin: 0;
+      color: #667eea;
+      border: none;
+      padding: 0;
+    }
+    
+    .batch-close {
+      font-size: 32px;
+      font-weight: bold;
+      color: #999;
+      cursor: pointer;
+      transition: color 0.3s;
+      background: none;
+      border: none;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .batch-close:hover {
+      color: #333;
+    }
+    
+    .batch-section {
+      margin-bottom: 25px;
+    }
+    
+    .batch-section-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 15px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .user-selection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+    
+    .user-checkbox-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: #f9f9f9;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .user-checkbox-item:hover {
+      background: #f0f0f0;
+      border-color: #667eea;
+    }
+    
+    .user-checkbox-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    
+    .user-checkbox-item.checked {
+      background: #e8eaf6;
+      border-color: #667eea;
+      font-weight: bold;
+    }
+    
+    .select-all-btn {
+      background: #667eea;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      transition: background 0.3s;
+    }
+    
+    .select-all-btn:hover {
+      background: #5568d3;
+    }
+    
+    .batch-input-field {
+      margin-bottom: 20px;
+    }
+    
+    .batch-input-field label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #555;
+    }
+    
+    .batch-input-field input,
+    .batch-input-field select,
+    .batch-input-field textarea {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      transition: border-color 0.3s;
+    }
+    
+    .batch-input-field input:focus,
+    .batch-input-field select:focus,
+    .batch-input-field textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .batch-input-field textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    
+    .batch-time-range {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .batch-time-range input {
+      flex: 1;
+    }
+    
+    .batch-actions {
+      display: flex;
+      gap: 15px;
+      justify-content: flex-end;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #eee;
+    }
+    
+    .btn-batch-save {
+      background: #4CAF50;
+      color: white;
+      padding: 14px 30px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    
+    .btn-batch-save:hover {
+      background: #45a049;
+    }
+    
+    .btn-batch-cancel {
+      background: #999;
+      color: white;
+      padding: 14px 30px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    
+    .btn-batch-cancel:hover {
+      background: #777;
+    }
+    
+    .selected-count {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    
+    /* 既存のスタイルの続き */
+    .input-row {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 2px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .input-row.active {
+      border-color: #2c5aa0;
+      box-shadow: 0 4px 16px rgba(44,90,160,0.15);
+    }
+    
+    .basic-info-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .input-field {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .input-field label {
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #555;
+      display: flex;
+      align-items: center;
+    }
+    
+    .required {
+      color: red;
+      margin-left: 4px;
+    }
+    
+    .input-field input,
+    .input-field select,
+    .input-field textarea {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 44px;
+    }
+    
+    .input-field input:focus,
+    .input-field select:focus,
+    .input-field textarea:focus {
+      outline: none;
+      border-color: #2c5aa0;
+      box-shadow: 0 0 0 2px rgba(44,90,160,0.1);
+    }
+    
+    .input-field textarea {
+      min-height: 80px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .input-field-time {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    .input-field-time input {
+      flex: 1;
+    }
+    
+    .input-field-time span {
+      font-weight: bold;
+      color: #666;
+    }
+    
+    /* 支援内容エリア */
+    .support-input-area,
+    .vital-input-area {
+      display: none;
+    }
+    
+    .support-input-area.active,
+    .vital-input-area.active {
+      display: block;
+    }
+    
+    .support-content-section {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .support-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #2c5aa0;
+    }
+    
+    .support-content-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border: 2px solid #e0e0e0;
+      position: relative;
+    }
+    
+    .support-number {
+      background: #667eea;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      margin-right: 6px;
+    }
+    
+    .support-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+    
+    /* バイタルエリア */
+    .vital-section {
+      background: #fff5f5;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    
+    .vital-entry {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border: 2px solid #ffcdd2;
+    }
+    
+    .vital-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #ffebee;
+    }
+    
+    .vital-number {
+      background: #E91E63;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .vital-time {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .vital-time label {
+      font-weight: bold;
+      font-size: 14px;
+    }
+    
+    .vital-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    
+    .vital-field {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .vital-field label {
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: #555;
+    }
+    
+    .vital-field input {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .row-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    
+    /* テーブル */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    thead {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    th {
+      padding: 15px;
+      text-align: left;
+      font-weight: bold;
+      font-size: 15px;
+    }
+    
+    td {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+    
+    tbody tr:hover {
+      background: #f5f5f5;
+    }
+    
+    .service-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      color: white;
+    }
+    
+    /* フィルター */
+    .filter-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .filter-row label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+    }
+    
+    .filter-row input,
+    .filter-row select {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 44px;
+    }
+    
+    .filter-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    /* モーダル */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      margin: 3% auto;
+      padding: 30px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 900px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #eee;
+    }
+    
+    .modal-header h2 {
+      margin: 0;
+      color: #9C27B0;
+      border: none;
+      padding: 0;
+    }
+    
+    .close {
+      color: #aaa;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s;
+      background: none;
+      border: none;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .close:hover {
+      color: #000;
+    }
+    
+    .master-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .master-tab {
+      padding: 12px 20px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s;
+      min-height: 44px;
+    }
+    
+    .master-tab.active {
+      background: #9C27B0;
+      color: white;
+      font-weight: bold;
+    }
+    
+    .master-tab-content {
+      display: none;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+    
+    .master-tab-content.active {
+      display: block;
+    }
+    
+    .master-add-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .master-add-form input,
+    .master-add-form select {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 44px;
+    }
+    
+    .master-list {
+      display: grid;
+      gap: 10px;
+    }
+    
+    .master-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .master-item-info {
+      flex: 1;
+    }
+    
+    .master-item-name {
+      font-weight: bold;
+      font-size: 15px;
+      color: #333;
+    }
+    
+    .master-item-detail {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .master-item-mapping {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    
+    .condition-chip {
+      display: inline-block;
+      padding: 4px 10px;
+      background: #e3f2fd;
+      color: #1976d2;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .btn-delete {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      min-height: 36px;
+      transition: background 0.3s;
+    }
+    
+    .btn-delete:hover {
+      background: #da190b;
+    }
+    
+    .condition-mapping-section {
+      margin-top: 20px;
+    }
+    
+    .mapping-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .mapping-controls select {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 44px;
+    }
+    
+    /* 同期モーダル */
+    .sync-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+    
+    .sync-section h3 {
+      margin-top: 0;
+      color: #00BCD4;
+      margin-bottom: 15px;
+    }
+    
+    .sync-url-input {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .sync-url-input input {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 48px;
+    }
+    
+    .sync-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .sync-status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .sync-status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .sync-status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    /* ログインID・パスワード管理 */
+    .login-management-form {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .login-management-form .input-field input {
+      width: 100%;
+    }
+    
+    .password-hint {
+      background: #fff3cd;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ffeeba;
+      color: #856404;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    
+    /* レスポンシブデザイン */
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .header h1 {
+        font-size: 1.3em;
+        text-align: center;
+      }
+      
+      .user-info {
+        justify-content: center;
+      }
+      
+      .controls {
+        flex-direction: column;
+      }
+      
+      .controls .btn {
+        width: 100%;
+      }
+      
+      .support-content-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .support-actions {
+        grid-column: 1 / -1;
+      }
+      
+      .basic-info-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .master-tabs {
+        flex-direction: column;
+      }
+      
+      .master-tab {
+        border-radius: 6px;
+      }
+      
+      table {
+        font-size: 14px;
+      }
+      
+      th, td {
+        padding: 10px 8px;
+      }
+      
+      .modal-content {
+        width: 95%;
+        padding: 20px;
+        margin: 5% auto;
+      }
+      
+      .batch-modal-content {
+        width: 95%;
+        padding: 20px;
+        margin: 5% auto;
+      }
+      
+      .user-selection-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 5px;
+        font-size: 14px;
+      }
+      
+      .header {
+        padding: 15px;
+      }
+      
+      .input-row {
+        padding: 15px;
+      }
+      
+      .btn {
+        font-size: 14px;
+        padding: 10px 16px;
+      }
+      
+      .support-content-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 15px;
+      }
+      
+      .vital-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+      
+    .btn-edit {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-right: 5px;
+      min-height: 32px;
+    }
+    
+    .btn-edit:hover {
+      background: #0b7dda;
+    }
+    
+    .btn-delete-record {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      min-height: 32px;
+    }
+    
+    .btn-delete-record:hover {
+      background: #da190b;
+    }
+
+    .btn-delete-selected {
+      background: #ff5722;
+      color: white;
+      font-weight: bold;
+    }
+    
+    .btn-delete-selected:hover {
+      background: #e64a19;
+    }
+    
+    .record-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+    
+    #selectAllCheckbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    /* ===== タブナビゲーション ===== */
+    .tab-nav {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 0;
+      border-bottom: 3px solid #2c5aa0;
+      padding: 0;
+    }
+    .tab-nav-btn {
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      background: #e0e7f3;
+      color: #2c5aa0;
+      transition: all 0.2s;
+      min-height: 48px;
+      outline: none;
+    }
+    .tab-nav-btn.active {
+      background: #2c5aa0;
+      color: white;
+      box-shadow: 0 -2px 8px rgba(44,90,160,0.15);
+    }
+    .tab-nav-btn:hover:not(.active) {
+      background: #c5d4ed;
+    }
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+
+    /* ===== 記録閲覧タブ用フィルター拡張 ===== */
+    .view-filter-section {
+      background: white;
+      padding: 20px;
+      border-radius: 0 8px 8px 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      border: 1px solid #e0e7f3;
+    }
+    .view-filter-section .filter-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .view-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .filter-count-badge {
+      display: inline-block;
+      background: #2c5aa0;
+      color: white;
+      padding: 4px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-left: 6px;
+    }
+
+    /* 編集モード表示 */
+    .edit-mode-banner {
+      display: none;
+      background: linear-gradient(135deg, #ff9800, #f44336);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-weight: bold;
+      font-size: 15px;
+      align-items: center;
+      gap: 10px;
+    }
+    .edit-mode-banner.active {
+      display: flex;
+    }
+    .btn-cancel-edit {
+      background: rgba(255,255,255,0.3);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.6);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      margin-left: auto;
+    }
+    .btn-cancel-edit:hover {
+      background: rgba(255,255,255,0.5);
+    }
+
+    /* 閲覧テーブルの操作列 */
+    .btn-edit-view {
+      background: #ff9800;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-right: 5px;
+      min-height: 32px;
+      font-weight: bold;
+    }
+    .btn-edit-view:hover { background: #e68900; }
+    .btn-delete-view {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      min-height: 32px;
+    }
+    .btn-delete-view:hover { background: #da190b; }
+
+    @media (max-width: 768px) {
+      .tab-nav-btn { padding: 10px 14px; font-size: 14px; }
+      .view-filter-section .filter-row { grid-template-columns: 1fr; }
+    }
+
+    /* ===== QRコード表示エリア ===== */
+    .qr-section {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid #e8e8e8;
+      text-align: center;
+    }
+    .qr-section h3 {
+      font-size: 13px;
+      color: #888;
+      margin: 0 0 10px 0;
+      font-weight: normal;
+    }
+    .qr-canvas-wrap {
+      display: inline-block;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    #qrCanvas {
+      display: block;
+    }
+    .qr-url-hint {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 8px;
+      word-break: break-all;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .login-container {
+      max-width: 440px !important;
+    }
+</style>
+</head>
+<body>
+
+<!-- ログイン画面 -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-container">
+    <div class="login-header">
+      <h1>📋 支援記録管理システム</h1>
+      <p>ログインしてください</p>
+    </div>
+    
+    <div id="loginError" class="login-error"></div>
+    
+    <form class="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="loginId">ログインID</label>
+        <input type="text" id="loginId" required autocomplete="username">
+      </div>
+      
+      <div class="form-group">
+        <label for="loginPassword">パスワード</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+      
+      <button type="submit" class="btn-login">ログイン</button>
+    </form>
+
+    <!-- QRコード表示エリア -->
+    <div class="qr-section">
+      <h3>📱 スマートフォン・iPhoneからのアクセス</h3>
+      <div class="qr-canvas-wrap" id="qrWrap">
+        <!-- QRコードがここに生成されます -->
+      </div>
+      <p class="qr-url-hint" id="qrUrlHint">QRコードを読み取るとこのページにアクセスできます</p>
+    </div>
+  </div>
+</div>
+
+<!-- メイン画面 -->
+<div id="mainScreen" class="main-screen">
+  <div class="header">
+    <h1>📋 支援記録管理システム</h1>
+    <div class="user-info">
+      <span>👤 <span id="currentUserName"></span></span>
+      <button class="btn-logout" onclick="logout()">ログアウト</button>
+    </div>
+  </div>
+  
+  <div class="controls">
+    <button class="btn btn-master" onclick="openMasterModal()">⚙️ マスター</button>
+    <button class="btn btn-sync" onclick="openSyncModal()">☁️ 同期</button>
+  </div>
+
+  <!-- タブナビゲーション -->
+  <div class="tab-nav">
+    <button class="tab-nav-btn active" id="tabBtnInput" onclick="switchTab('input')">📝 記録入力</button>
+    <button class="tab-nav-btn" id="tabBtnView" onclick="switchTab('view')">📋 記録閲覧</button>
+  </div>
+
+  <!-- 記録入力タブ -->
+  <div id="tabInput" class="tab-panel active">
+    <!-- 編集モードバナー -->
+    <div id="editModeBanner" class="edit-mode-banner">
+      <span>✏️ 編集モード：既存記録を削除して再入力してください</span>
+      <button class="btn-cancel-edit" onclick="cancelEditMode()">✕ キャンセル</button>
+    </div>
+    <div class="controls" style="margin-top:16px;">
+      <button class="btn btn-add" onclick="addInputRow()">➕ 新規記録</button>
+      <button class="btn btn-batch" onclick="openBatchModal()">📋 一括入力</button>
+      <button class="btn btn-sync" onclick="uploadLocalRecords()">⬆️ アップロード</button>
+      <button class="btn btn-clear" onclick="clearAll()">🗑️ 入力記録を全削除</button>
+    </div>
+    <!-- 入力済み記録の一覧（アップロード待ちリスト） -->
+    <div id="inputContainer"></div>
+    <div id="localRecordsSection" style="margin-top:24px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <h2 style="margin:0;">📋 アップロード待ち記録 <span id="localRecordCountBadge" style="background:#e53935;color:white;padding:3px 12px;border-radius:12px;font-size:14px;font-weight:bold;margin-left:6px;">0件</span></h2>
+      </div>
+      <table id="localRecordTable">
+        <thead>
+          <tr>
+            <th>記録日</th>
+            <th>サービス区分</th>
+            <th>利用者名</th>
+            <th>記録者名</th>
+            <th>記録内容</th>
+            <th style="width:80px;">操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 記録閲覧タブ -->
+  <div id="tabView" class="tab-panel">
+    <!-- ダウンロードボタン -->
+    <div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-sync" onclick="downloadCloudRecords()">⬇️ クラウドから記録をダウンロード</button>
+      <span id="cloudRecordInfo" style="color:#666;font-size:14px;">※ダウンロードした記録のみ表示されます</span>
+    </div>
+    <div class="view-filter-section">
+      <div class="filter-row">
+        <div>
+          <label>📅 月フィルター</label>
+          <input type="month" id="viewFilterMonth">
+        </div>
+        <div>
+          <label>🏷️ サービス区分</label>
+          <select id="viewFilterService">
+            <option value="">すべて</option>
+          </select>
+        </div>
+        <div>
+          <label>👤 利用者名</label>
+          <input type="text" id="viewFilterUser" placeholder="利用者名で検索">
+        </div>
+        <div>
+          <label>📌 特記事項キーワード</label>
+          <input type="text" id="viewFilterNote" placeholder="キーワードで検索">
+        </div>
+        <div>
+          <label>📝 支援内容キーワード</label>
+          <input type="text" id="viewFilterDetail" placeholder="キーワードで検索">
+        </div>
+        <div>
+          <label>📋 記録種別</label>
+          <select id="viewFilterType">
+            <option value="">すべて</option>
+            <option value="support">支援記録</option>
+            <option value="vital">バイタル</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-save" onclick="applyViewFilter()">🔍 絞り込み</button>
+        <button class="btn btn-cancel" onclick="resetViewFilter()">🔄 リセット</button>
+        <button class="btn btn-export" onclick="exportExcel()">📥 絞り込み結果をExcel出力</button>
+        <span id="viewFilterCountBadge" class="filter-count-badge">0件</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-delete-selected" id="deleteSelectedBtn" onclick="deleteSelected()" style="display: none;">🗑️ 選択削除 (<span id="selectedCount">0</span>件)</button>
+    </div>
+    <table id="recordTable">
+      <thead>
+        <tr>
+          <th style="width: 50px;">
+            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)">
+          </th>
+          <th>記録日</th>
+          <th>サービス区分</th>
+          <th>利用者名</th>
+          <th>記録者名</th>
+          <th>記録内容</th>
+          <th style="width: 120px;">操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<!-- 一括入力モーダル（NEW） -->
+<div id="batchModal" class="batch-modal">
+  <div class="batch-modal-content">
+    <div class="batch-header">
+      <h2>📋 複数利用者の一括入力</h2>
+      <button class="batch-close" onclick="closeBatchModal()">&times;</button>
+    </div>
+    
+    <!-- Step 1: 利用者選択 -->
+    <div class="batch-section">
+      <div class="batch-section-title">
+        ① 利用者を選択
+        <span id="selectedCountBadge" class="selected-count">0人選択中</span>
+      </div>
+      <button class="select-all-btn" onclick="toggleSelectAllUsers()">全員選択 / 解除</button>
+      <div id="userSelectionGrid" class="user-selection-grid"></div>
+    </div>
+    
+    <!-- Step 2: 基本情報入力 -->
+    <div class="batch-section">
+      <div class="batch-section-title">② 基本情報</div>
+      <div class="batch-input-field">
+        <label>記録日 <span class="required">*</span></label>
+        <input type="date" id="batchDate" required>
+      </div>
+      <div class="batch-input-field">
+        <label>サービス区分 <span class="required">*</span></label>
+        <select id="batchService" required>
+          <option value="">選択してください</option>
+        </select>
+      </div>
+      <div class="batch-input-field">
+        <label>記録者名 <span class="required">*</span></label>
+        <select id="batchStaff" required>
+          <option value="">選択してください</option>
+        </select>
+      </div>
+    </div>
+    
+    <!-- Step 3: 支援内容入力 -->
+    <div class="batch-section">
+      <div class="batch-section-title">③ 支援内容（全員共通）</div>
+      <div class="batch-input-field">
+        <label>支援内容 <span class="required">*</span></label>
+        <select id="batchSupportType" required>
+          <option value="">選択してください</option>
+        </select>
+      </div>
+      <div class="batch-input-field">
+        <label>時間範囲</label>
+        <div class="batch-time-range">
+          <input type="time" id="batchStartTime">
+          <span>〜</span>
+          <input type="time" id="batchEndTime">
+        </div>
+      </div>
+      <div class="batch-input-field">
+        <label>様子・状態</label>
+        <select id="batchCondition">
+          <option value="">選択してください</option>
+        </select>
+      </div>
+      <div class="batch-input-field">
+        <label>活動場所</label>
+        <select id="batchLocation">
+          <option value="">選択してください</option>
+        </select>
+      </div>
+      <div class="batch-input-field">
+        <label>活動内容</label>
+        <select id="batchActivity">
+          <option value="">選択してください</option>
+        </select>
+      </div>
+      <div class="batch-input-field">
+        <label>
+          支援の詳細
+          <button type="button" class="btn-voice" onclick="startVoiceInput(document.getElementById('batchDetail'))" title="音声入力">🎤</button>
+        </label>
+        <textarea id="batchDetail" placeholder="イベント内容や活動の詳細を入力"></textarea>
+      </div>
+      <div class="batch-input-field">
+        <label>
+          特記事項
+          <button type="button" class="btn-voice" onclick="startVoiceInput(document.getElementById('batchNote'))" title="音声入力">🎤</button>
+        </label>
+        <textarea id="batchNote" placeholder="特記事項があれば入力"></textarea>
+      </div>
+    </div>
+    
+    <!-- 保存ボタン -->
+    <div class="batch-actions">
+      <button class="btn-batch-save" onclick="saveBatchRecords()">✓ 一括保存</button>
+      <button class="btn-batch-cancel" onclick="closeBatchModal()">✕ キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- マスターモーダル -->
+<div id="masterModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>⚙️ マスターデータ管理</h2>
+      <button class="close" onclick="closeMasterModal()">&times;</button>
+    </div>
+    
+    <div class="master-tabs">
+      <button class="master-tab active" onclick="switchMasterTab('users')">利用者</button>
+      <button class="master-tab" onclick="switchMasterTab('services')">サービス区分</button>
+      <button class="master-tab" onclick="switchMasterTab('staff')">記録者</button>
+      <button class="master-tab" onclick="switchMasterTab('supportTypes')">支援内容</button>
+      <button class="master-tab" onclick="switchMasterTab('conditions')">様子・状態</button>
+      <button class="master-tab" onclick="switchMasterTab('locations')">活動場所</button>
+      <button class="master-tab" onclick="switchMasterTab('activityTypes')">活動内容</button>
+      <button class="master-tab" onclick="switchMasterTab('conditionMapping')">連動設定</button>
+      <button class="master-tab" onclick="switchMasterTab('loginManagement')">🔐 ログインID・パスワード管理</button>
+    </div>
+    
+    <!-- 利用者タブ -->
+    <div id="tab-users" class="master-tab-content active">
+      <div class="master-add-form">
+        <input type="text" id="newUserName" placeholder="利用者名">
+        <select id="newUserService">
+          <option value="">サービス区分</option>
+        </select>
+        <button class="btn btn-add" onclick="addUser()">➕ 追加</button>
+      </div>
+      <div id="userList" class="master-list"></div>
+    </div>
+    
+    <!-- サービス区分タブ -->
+    <div id="tab-services" class="master-tab-content">
+      <div class="master-add-form">
+        <input type="text" id="newService" placeholder="サービス区分名">
+        <button class="btn btn-add" onclick="addService()">➕ 追加</button>
+      </div>
+      <div id="serviceList" class="master-list"></div>
+    </div>
+    
+    <!-- 記録者タブ -->
+    <div id="tab-staff" class="master-tab-content">
+      <div class="master-add-form">
+        <input type="text" id="newStaff" placeholder="記録者名">
+        <button class="btn btn-add" onclick="addStaff()">➕ 追加</button>
+      </div>
+      <div id="staffList" class="master-list"></div>
+    </div>
+    
+    <!-- 支援内容タブ -->
+    <div id="tab-supportTypes" class="master-tab-content">
+      <div class="master-add-form">
+        <input type="text" id="newSupportType" placeholder="支援内容">
+        <button class="btn btn-add" onclick="addSupportType()">➕ 追加</button>
+      </div>
+      <div id="supportTypeList" class="master-list"></div>
+    </div>
+    
+    <!-- 様子・状態タブ -->
+    <div id="tab-conditions" class="master-tab-content">
+      <div class="master-add-form">
+        <input type="text" id="newCondition" placeholder="様子・状態">
+        <button class="btn btn-add" onclick="addCondition()">➕ 追加</button>
+      </div>
+      <div id="conditionList" class="master-list"></div>
+    </div>
+    
+    <!-- 活動場所タブ -->
+    <div id="tab-locations" class="master-tab-content">
+      <div class="master-add-form">
+        <input type="text" id="newLocation" placeholder="活動場所">
+        <button class="btn btn-add" onclick="addLocation()">➕ 追加</button>
+      </div>
+      <div id="locationList" class="master-list"></div>
+    </div>
+    
+    <!-- 活動内容タブ -->
+    <div id="tab-activityTypes" class="master-tab-content">
+      <div class="master-add-form">
+        <input type="text" id="newActivityType" placeholder="活動内容">
+        <button class="btn btn-add" onclick="addActivityType()">➕ 追加</button>
+      </div>
+      <div id="activityTypeList" class="master-list"></div>
+    </div>
+    
+    <!-- 連動設定タブ -->
+    <div id="tab-conditionMapping" class="master-tab-content">
+      <div class="condition-mapping-section">
+        <h3>支援内容と様子・状態の連動設定</h3>
+        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+          支援内容を選択すると、該当する様子・状態のみが表示されます
+        </p>
+        <div class="mapping-controls">
+          <select id="mappingSupportType">
+            <option value="">支援内容を選択</option>
+          </select>
+          <select id="mappingCondition">
+            <option value="">様子・状態を選択</option>
+          </select>
+          <button class="btn btn-add" onclick="addConditionMapping()">➕ 連動追加</button>
+        </div>
+        <div id="conditionMappingList" class="master-list"></div>
+      </div>
+    </div>
+    
+    <!-- ログインID・パスワード管理タブ -->
+    <div id="tab-loginManagement" class="master-tab-content">
+      <h3>🔐 ログインID・パスワード設定</h3>
+      <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+        システムにログインするためのID・パスワードを変更できます
+      </p>
+      <div class="login-management-form">
+        <div class="input-field">
+          <label>新しいログインID <span class="required">*</span></label>
+          <input type="text" id="newLoginId" placeholder="新しいログインID">
+        </div>
+        <div class="input-field">
+          <label>新しいパスワード <span class="required">*</span></label>
+          <input type="password" id="newLoginPassword" placeholder="新しいパスワード（6文字以上）">
+        </div>
+        <div class="input-field">
+          <label>パスワード（確認） <span class="required">*</span></label>
+          <input type="password" id="newLoginPasswordConfirm" placeholder="もう一度入力">
+        </div>
+        <div class="password-hint">
+          ⚠️ パスワードは6文字以上で設定してください。変更後は新しいID・パスワードでログインが必要です。
+        </div>
+        <button class="btn btn-save" onclick="updateLoginCredentials()" style="margin-top: 10px;">✓ 変更を保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 同期モーダル -->
+<div id="syncModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>☁️ Google Sheets 同期</h2>
+      <button class="close" onclick="closeSyncModal()">&times;</button>
+    </div>
+    
+    <div class="sync-section">
+      <h3>⚙️ Google Sheets API URL設定</h3>
+      <div class="sync-url-input">
+        <input type="url" id="syncUrl" placeholder="https://script.google.com/macros/s/.../exec">
+        <button class="btn btn-save" onclick="saveSyncUrl()">保存</button>
+      </div>
+      <p style="color: #666; font-size: 14px; margin-top: 10px;">
+        ※ Google Apps ScriptのウェブアプリURLを設定してください
+      </p>
+    </div>
+    
+    <div class="sync-section">
+      <h3>📤 データ同期</h3>
+      <div style="background:#f7fbff;border:1px solid #d8e8f8;border-radius:8px;padding:12px;margin-bottom:12px;">
+        <div style="font-weight:bold;color:#2c5aa0;margin-bottom:8px;">⬇️ ダウンロード条件を選択</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+          <div>
+            <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">年月</label>
+            <input type="month" id="downloadFilterMonth" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">サービス区分</label>
+            <select id="downloadFilterService" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
+              <option value="">すべて</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">利用者名</label>
+            <input type="text" id="downloadFilterUser" placeholder="部分一致" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#666;margin-bottom:4px;">記録種別</label>
+            <select id="downloadFilterType" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;">
+              <option value="">すべて</option>
+              <option value="support">支援記録</option>
+              <option value="vital">バイタル記録</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:12px;color:#666;">※ 指定した条件だけをクラウドから取得します。未指定なら全件取得です。</div>
+      </div>
+      <div class="sync-buttons">
+        <button class="btn btn-sync" onclick="uploadLocalRecords()">⬆️ 入力記録をアップロード</button>
+        <button class="btn btn-sync" onclick="downloadCloudRecords()">⬇️ 条件を指定してダウンロード</button>
+      </div>
+      <div id="syncStatus" class="sync-status"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+    // ユニークID生成関数
+  function generateRecordId() {
+    return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  }
+  
+  // 既存データにIDを付与
+  function ensureRecordIds() {
+    let updated = false;
+    records.forEach(record => {
+      if (!record.id) {
+        record.id = generateRecordId();
+        updated = true;
+      }
+    });
+    if (updated) {
+      saveRecords();
+    }
+  }
+  
+  // グローバル変数
+  // ---- データモデル ----
+  // records        : 記録入力タブで入力した記録（アップロード対象）
+  // cloudRecords   : 閲覧タブでダウンロードした記録（閲覧専用・アップロード非対象）
+  // filtered       : cloudRecords を絞り込んだもの（閲覧テーブル表示用）
+  let records = JSON.parse(localStorage.getItem('records') || '[]');
+  let cloudRecords = [];         // ダウンロードした記録（メモリ上のみ）
+  let filtered = [];             // 閲覧テーブル用（cloudRecords のサブセット）
+  let rowIdCounter = 0;
+  let supportCounterMap = {};
+  let vitalCounterMap = {};
+  let editingRecordId = null; // 編集モード時の対象記録ID
+  
+  // マスターデータ
+  let masterUsers = JSON.parse(localStorage.getItem('masterUsers') || '[]');
+  let masterServices = JSON.parse(localStorage.getItem('masterServices') || '[]');
+  let masterStaff = JSON.parse(localStorage.getItem('masterStaff') || '[]');
+  let masterSupportTypes = JSON.parse(localStorage.getItem('masterSupportTypes') || '[]');
+  let masterConditions = JSON.parse(localStorage.getItem('masterConditions') || '[]');
+  let masterLocations = JSON.parse(localStorage.getItem('masterLocations') || '[]');
+  let masterActivityTypes = JSON.parse(localStorage.getItem('masterActivityTypes') || '[]');
+  let supportConditionMap = JSON.parse(localStorage.getItem('supportConditionMap') || '{}');
+  
+  // 音声認識
+  let recognition = null;
+  let currentVoiceInput = null;
+  
+  // ログイン機能
+  const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24時間
+  
+  function checkSession() {
+    const loginTime = localStorage.getItem('loginTime');
+    const currentTime = new Date().getTime();
+    
+    if (!loginTime || (currentTime - parseInt(loginTime)) > SESSION_DURATION) {
+      // セッション切れ
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('mainScreen').classList.remove('active');
+      return false;
+    }
+    
+    // セッション有効
+    const credentials = JSON.parse(localStorage.getItem('loginCredentials') || '{"id":"admin","password":"admin123"}');
+    document.getElementById('currentUserName').textContent = credentials.id;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainScreen').classList.add('active');
+    return true;
+  }
+  
+  function handleLogin(event) {
+    event.preventDefault();
+    
+    const inputId = document.getElementById('loginId').value.trim();
+    const inputPassword = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+    
+    const credentials = JSON.parse(localStorage.getItem('loginCredentials') || '{"id":"admin","password":"admin123"}');
+    
+    if (inputId === credentials.id && inputPassword === credentials.password) {
+      // ログイン成功
+      localStorage.setItem('loginTime', new Date().getTime().toString());
+      document.getElementById('currentUserName').textContent = credentials.id;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainScreen').classList.add('active');
+      errorEl.style.display = 'none';
+    } else {
+      // ログイン失敗
+      errorEl.textContent = '❌ ログインIDまたはパスワードが正しくありません';
+      errorEl.style.display = 'block';
+    }
+  }
+  
+  function logout() {
+    if (confirm('ログアウトしますか？')) {
+      localStorage.removeItem('loginTime');
+      document.getElementById('loginId').value = '';
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('mainScreen').classList.remove('active');
+    }
+  }
+  
+  function updateLoginCredentials() {
+    const newId = document.getElementById('newLoginId').value.trim();
+    const newPass = document.getElementById('newLoginPassword').value;
+    const confirmPass = document.getElementById('newLoginPasswordConfirm').value;
+    
+    if (!newId || !newPass || !confirmPass) {
+      alert('すべての項目を入力してください');
+      return;
+    }
+    
+    if (newPass.length < 6) {
+      alert('パスワードは6文字以上で設定してください');
+      return;
+    }
+    
+    if (newPass !== confirmPass) {
+      alert('パスワードが一致しません');
+      return;
+    }
+    
+    if (confirm('ログインID・パスワードを変更しますか?\n変更後は新しいID・パスワードでログインが必要です。')) {
+      const credentials = { id: newId, password: newPass };
+      localStorage.setItem('loginCredentials', JSON.stringify(credentials));
+      localStorage.removeItem('loginTime');
+      
+      alert('✓ ログインID・パスワードを変更しました。再ログインしてください。');
+      
+      document.getElementById('newLoginId').value = '';
+      document.getElementById('newLoginPassword').value = '';
+      document.getElementById('newLoginPasswordConfirm').value = '';
+      
+      closeMasterModal();
+      logout();
+    }
+  }
+  
+  // 一括入力モーダル関連（NEW）
+  let selectedUserIds = new Set();
+  
+  function openBatchModal() {
+    if (masterUsers.length === 0) {
+      alert('マスターデータに利用者が登録されていません。\n先に「⚙️ マスター」から利用者を登録してください。');
+      return;
+    }
+    
+    // 利用者選択グリッドを生成
+    const grid = document.getElementById('userSelectionGrid');
+    grid.innerHTML = '';
+    
+    masterUsers.forEach((user, index) => {
+      const div = document.createElement('div');
+      div.className = 'user-checkbox-item';
+      div.onclick = () => toggleUserSelection(index, div);
+      
+      div.innerHTML = `
+        <input type="checkbox" id="user-${index}" onclick="event.stopPropagation(); toggleUserSelection(${index}, this.parentElement)">
+        <label for="user-${index}" style="cursor: pointer; flex: 1;">${user.name}（${user.service}）</label>
+      `;
+      
+      grid.appendChild(div);
+    });
+    
+    // 初期化
+    selectedUserIds.clear();
+    updateSelectedCount();
+    
+    // 今日の日付をセット
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('batchDate').value = today;
+    
+    // マスターデータの選択肢を設定
+    populateBatchSelects();
+    
+    // フォームリセット
+    document.getElementById('batchService').value = '';
+    document.getElementById('batchStaff').value = '';
+    document.getElementById('batchSupportType').value = '';
+    document.getElementById('batchStartTime').value = '';
+    document.getElementById('batchEndTime').value = '';
+    document.getElementById('batchCondition').value = '';
+    document.getElementById('batchLocation').value = '';
+    document.getElementById('batchActivity').value = '';
+    document.getElementById('batchDetail').value = '';
+    document.getElementById('batchNote').value = '';
+    
+    document.getElementById('batchModal').style.display = 'block';
+  }
+  
+  function closeBatchModal() {
+    document.getElementById('batchModal').style.display = 'none';
+    selectedUserIds.clear();
+  }
+  
+  function toggleUserSelection(index, element) {
+    const checkbox = element.querySelector('input[type="checkbox"]');
+    
+    if (selectedUserIds.has(index)) {
+      selectedUserIds.delete(index);
+      element.classList.remove('checked');
+      checkbox.checked = false;
+    } else {
+      selectedUserIds.add(index);
+      element.classList.add('checked');
+      checkbox.checked = true;
+    }
+    
+    updateSelectedCount();
+  }
+  
+  function toggleSelectAllUsers() {
+    const grid = document.getElementById('userSelectionGrid');
+    const items = grid.querySelectorAll('.user-checkbox-item');
+    
+    if (selectedUserIds.size === masterUsers.length) {
+      // 全解除
+      selectedUserIds.clear();
+      items.forEach((item, index) => {
+        item.classList.remove('checked');
+        item.querySelector('input[type="checkbox"]').checked = false;
+      });
+    } else {
+      // 全選択
+      selectedUserIds.clear();
+      items.forEach((item, index) => {
+        selectedUserIds.add(index);
+        item.classList.add('checked');
+        item.querySelector('input[type="checkbox"]').checked = true;
+      });
+    }
+    
+    updateSelectedCount();
+  }
+  
+  function updateSelectedCount() {
+    document.getElementById('selectedCountBadge').textContent = `${selectedUserIds.size}人選択中`;
+  }
+  
+  function populateBatchSelects() {
+    // サービス区分
+    const serviceSelect = document.getElementById('batchService');
+    serviceSelect.innerHTML = '<option value="">選択してください</option>';
+    masterServices.forEach(service => {
+      const option = document.createElement('option');
+      option.value = service;
+      option.textContent = service;
+      serviceSelect.appendChild(option);
+    });
+    
+    // 記録者
+    const staffSelect = document.getElementById('batchStaff');
+    staffSelect.innerHTML = '<option value="">選択してください</option>';
+    masterStaff.forEach(staff => {
+      const option = document.createElement('option');
+      option.value = staff;
+      option.textContent = staff;
+      staffSelect.appendChild(option);
+    });
+    
+    // 支援内容
+    const supportSelect = document.getElementById('batchSupportType');
+    supportSelect.innerHTML = '<option value="">選択してください</option>';
+    masterSupportTypes.forEach(type => {
+      const option = document.createElement('option');
+      option.value = type;
+      option.textContent = type;
+      supportSelect.appendChild(option);
+    });
+    
+    // 様子・状態
+    const conditionSelect = document.getElementById('batchCondition');
+    conditionSelect.innerHTML = '<option value="">選択してください</option>';
+    masterConditions.forEach(cond => {
+      const option = document.createElement('option');
+      option.value = cond;
+      option.textContent = cond;
+      conditionSelect.appendChild(option);
+    });
+    
+    // 活動場所
+    const locationSelect = document.getElementById('batchLocation');
+    locationSelect.innerHTML = '<option value="">選択してください</option>';
+    masterLocations.forEach(loc => {
+      const option = document.createElement('option');
+      option.value = loc;
+      option.textContent = loc;
+      locationSelect.appendChild(option);
+    });
+    
+    // 活動内容
+    const activitySelect = document.getElementById('batchActivity');
+    activitySelect.innerHTML = '<option value="">選択してください</option>';
+    masterActivityTypes.forEach(act => {
+      const option = document.createElement('option');
+      option.value = act;
+      option.textContent = act;
+      activitySelect.appendChild(option);
+    });
+  }
+  
+  function saveBatchRecords() {
+    // バリデーション
+    if (selectedUserIds.size === 0) {
+      alert('利用者を1人以上選択してください');
+      return;
+    }
+    
+    const date = document.getElementById('batchDate').value;
+    const service = document.getElementById('batchService').value;
+    const staff = document.getElementById('batchStaff').value;
+    const supportType = document.getElementById('batchSupportType').value;
+    
+    if (!date || !service || !staff || !supportType) {
+      alert('必須項目（記録日、サービス区分、記録者名、支援内容）をすべて入力してください');
+      return;
+    }
+    
+    // 支援内容データ収集
+    const startTime = document.getElementById('batchStartTime').value;
+    const endTime = document.getElementById('batchEndTime').value;
+    const condition = document.getElementById('batchCondition').value;
+    const location = document.getElementById('batchLocation').value;
+    const activity = document.getElementById('batchActivity').value;
+    const detail = document.getElementById('batchDetail').value.trim();
+    const note = document.getElementById('batchNote').value.trim();
+    
+    let timeRange = '';
+    if (startTime && endTime) {
+      timeRange = `${startTime}〜${endTime}`;
+    } else if (startTime) {
+      timeRange = `${startTime}〜`;
+    } else if (endTime) {
+      timeRange = `〜${endTime}`;
+    }
+    
+    const supportContent = {
+      type: supportType,
+      timeRange,
+      cond: condition,
+      location,
+      activity,
+      detail,
+      note
+    };
+    
+    // 選択された各利用者に対して記録を作成
+    let savedCount = 0;
+    selectedUserIds.forEach(index => {
+      const user = masterUsers[index];
+      
+      const record = {
+        id: generateRecordId(),
+        date,
+        service,
+        user: user.name,
+        staff,
+        recordType: 'support',
+        supportContents: [supportContent]
+      };
+      
+      records.push(record);
+      savedCount++;
+    });
+    
+    saveRecords();
+    renderLocalTable();   // 入力タブのアップロード待ち一覧を更新
+    
+    alert(`✓ ${savedCount}人分の支援記録を一括保存しました！`);
+    closeBatchModal();
+  }
+  
+  // データ保存・読み込み
+  function saveRecords() {
+    localStorage.setItem('records', JSON.stringify(records));
+  }
+  
+  function saveMasterData() {
+    localStorage.setItem('masterUsers', JSON.stringify(masterUsers));
+    localStorage.setItem('masterServices', JSON.stringify(masterServices));
+    localStorage.setItem('masterStaff', JSON.stringify(masterStaff));
+    localStorage.setItem('masterSupportTypes', JSON.stringify(masterSupportTypes));
+    localStorage.setItem('masterConditions', JSON.stringify(masterConditions));
+    localStorage.setItem('masterLocations', JSON.stringify(masterLocations));
+    localStorage.setItem('masterActivityTypes', JSON.stringify(masterActivityTypes));
+    localStorage.setItem('supportConditionMap', JSON.stringify(supportConditionMap));
+  }
+  
+  function loadMasterData() {
+    renderMasterLists();
+  }
+  
+  // 音声入力初期化
+  function initSpeechRecognition() {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'ja-JP';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        if (currentVoiceInput) {
+          currentVoiceInput.value += (currentVoiceInput.value ? ' ' : '') + transcript;
+        }
+      };
+      
+      recognition.onerror = (event) => {
+        console.error('音声認識エラー:', event.error);
+        alert('音声認識に失敗しました: ' + event.error);
+      };
+    } else {
+      console.warn('このブラウザは音声認識に対応していません');
+    }
+  }
+  
+  function startVoiceInput(textarea) {
+    if (!recognition) {
+      alert('このブラウザは音声認識に対応していません');
+      return;
+    }
+    
+    currentVoiceInput = textarea;
+    recognition.start();
+  }
+  
+  // マスターモーダル
+  function openMasterModal() {
+    renderMasterLists();
+    document.getElementById('masterModal').style.display = 'block';
+  }
+  
+  function closeMasterModal() {
+    document.getElementById('masterModal').style.display = 'none';
+  }
+  
+  function switchMasterTab(tabName) {
+    document.querySelectorAll('.master-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.master-tab-content').forEach(content => content.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+  }
+  
+  // 同期モーダル
+  function openSyncModal() {
+    const url = localStorage.getItem('syncUrl') || '';
+    document.getElementById('syncUrl').value = url;
+    populateDownloadFilterOptions();
+    document.getElementById('syncModal').style.display = 'block';
+  }
+
+  function populateDownloadFilterOptions() {
+    const serviceEl = document.getElementById('downloadFilterService');
+    if (!serviceEl) return;
+    const current = serviceEl.value;
+    serviceEl.innerHTML = '<option value="">すべて</option>';
+    masterServices.forEach(service => {
+      const opt = document.createElement('option');
+      opt.value = service;
+      opt.textContent = service;
+      serviceEl.appendChild(opt);
+    });
+    serviceEl.value = current || '';
+  }
+
+  function getDownloadFilterParams() {
+    const params = {
+      month: document.getElementById('downloadFilterMonth')?.value || '',
+      service: document.getElementById('downloadFilterService')?.value || '',
+      user: (document.getElementById('downloadFilterUser')?.value || '').trim(),
+      recordType: document.getElementById('downloadFilterType')?.value || ''
+    };
+    return params;
+  }
+
+  function buildDownloadUrl(baseUrl, params) {
+    const urlObj = new URL(baseUrl);
+    if (params.month) urlObj.searchParams.set('month', params.month);
+    if (params.service) urlObj.searchParams.set('service', params.service);
+    if (params.user) urlObj.searchParams.set('user', params.user);
+    if (params.recordType) urlObj.searchParams.set('recordType', params.recordType);
+    return urlObj.toString();
+  }
+
+  function applyDownloadFiltersToView(params) {
+    const monthEl = document.getElementById('viewFilterMonth');
+    const serviceEl = document.getElementById('viewFilterService');
+    const userEl = document.getElementById('viewFilterUser');
+    const typeEl = document.getElementById('viewFilterType');
+    if (monthEl) monthEl.value = params.month || '';
+    if (serviceEl) serviceEl.value = params.service || '';
+    if (userEl) userEl.value = params.user || '';
+    if (typeEl) typeEl.value = params.recordType || '';
+    const noteEl = document.getElementById('viewFilterNote');
+    const detailEl = document.getElementById('viewFilterDetail');
+    if (noteEl) noteEl.value = '';
+    if (detailEl) detailEl.value = '';
+  }
+  
+  function closeSyncModal() {
+    document.getElementById('syncModal').style.display = 'none';
+  }
+  
+  function saveSyncUrl() {
+    const url = document.getElementById('syncUrl').value.trim();
+    if (url) {
+      localStorage.setItem('syncUrl', url);
+      alert('✓ 同期URLを保存しました');
+    } else {
+      alert('URLを入力してください');
+    }
+  }
+  
+  function showSyncStatus(message, isSuccess) {
+    const statusEl = document.getElementById('syncStatus');
+    statusEl.textContent = message;
+    statusEl.className = 'sync-status ' + (isSuccess ? 'success' : 'error');
+    statusEl.style.display = 'block';
+    
+    setTimeout(() => {
+      statusEl.style.display = 'none';
+    }, 5000);
+  }
+  
+  
+  // データ圧縮（簡易版）
+  function compressData(data) {
+    try {
+      const jsonStr = JSON.stringify(data);
+      // Base64エンコード（実際の圧縮は省略、必要に応じてlz-stringなどを使用）
+      return btoa(unescape(encodeURIComponent(jsonStr)));
+    } catch (e) {
+      console.error('データ圧縮エラー:', e);
+      return null;
+    }
+  }
+  
+  // データ展開
+  function decompressData(compressed) {
+    try {
+      const jsonStr = decodeURIComponent(escape(atob(compressed)));
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      console.error('データ展開エラー:', e);
+      return null;
+    }
+  }
+  
+  // 配列を分割
+  function chunkArray(array, chunkSize) {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
+  }
+  
+  // アップロード: records (入力記録のみ) を送信
+  async function uploadLocalRecords() {
+    const url = localStorage.getItem('syncUrl');
+    if (!url) {
+      alert('先に同期URLを設定してください（⚙️ マスター → ☁️ 同期）');
+      openSyncModal();
+      return;
+    }
+    
+    const recordCount = records.length;
+    if (recordCount === 0) {
+      alert('アップロードする記録がありません。\n記録入力タブで記録を保存してください。');
+      return;
+    }
+    
+    let confirmMsg = `入力記録をGoogle Sheetsにアップロードしますか？\n\n📋 アップロード件数: ${recordCount}件\n\n※閲覧タブのクラウドデータは送信されません`;
+    
+    if (recordCount > 1000) {
+      confirmMsg += '\n\n⚠️ データ量が多いため、アップロードに時間がかかる可能性があります。';
+    }
+    
+    if (!confirm(confirmMsg)) {
+      return;
+    }
+    
+    showSyncStatus('⏳ アップロード中...', true);
+    
+    try {
+      // データ量が多い場合は分割アップロード
+      if (recordCount > 500) {
+        // 記録を500件ずつに分割
+        const recordChunks = chunkArray(records, 500);
+        
+        for (let i = 0; i < recordChunks.length; i++) {
+          showSyncStatus(`⏳ アップロード中... (${i + 1}/${recordChunks.length})`, true);
+          
+          const chunkData = {
+            records: recordChunks[i],
+            masterUsers: i === 0 ? masterUsers : [],
+            masterServices: i === 0 ? masterServices : [],
+            masterStaff: i === 0 ? masterStaff : [],
+            masterSupportTypes: i === 0 ? masterSupportTypes : [],
+            masterConditions: i === 0 ? masterConditions : [],
+            masterLocations: i === 0 ? masterLocations : [],
+            masterActivityTypes: i === 0 ? masterActivityTypes : [],
+            supportConditionMap: i === 0 ? supportConditionMap : {},
+            isChunk: true,
+            chunkIndex: i,
+            totalChunks: recordChunks.length,
+            appendMode: true   // 追記モード: 既存データを上書きしない
+          };
+          
+          await fetch(url, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(chunkData)
+          });
+          
+          // 次のチャンクまで少し待機
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        showSyncStatus(`✓ データをアップロードしました（${recordChunks.length}回に分割）`, true);
+        if (confirm(`✓ ${recordCount}件のアップロードが完了しました。\nアップロード待ち記録をクリアしますか？`)) {
+          records = [];
+          saveRecords();
+          renderLocalTable();
+        }
+      } else {
+        // 通常のアップロード（追記モード）
+        const data = {
+          records,
+          masterUsers,
+          masterServices,
+          masterStaff,
+          masterSupportTypes,
+          masterConditions,
+          masterLocations,
+          masterActivityTypes,
+          supportConditionMap,
+          appendMode: true   // 追記モード: 既存データを上書きしない
+        };
+        
+        await fetch(url, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        showSyncStatus(`✓ ${recordCount}件のデータをアップロードしました`, true);
+        if (confirm(`✓ ${recordCount}件のアップロードが完了しました。\nアップロード待ち記録をクリアしますか？`)) {
+          records = [];
+          saveRecords();
+          renderLocalTable();
+        }
+      }
+    } catch (error) {
+      showSyncStatus('✗ アップロードに失敗しました: ' + error.message, false);
+    }
+  }
+  
+  // ダウンロード: cloudRecords に保存（records/localStorageは上書きしない）
+  async function downloadCloudRecords() {
+    const url = localStorage.getItem('syncUrl');
+    if (!url) {
+      alert('先に同期URLを設定してください（⚙️ マスター → ☁️ 同期）');
+      openSyncModal();
+      return;
+    }
+
+    const params = getDownloadFilterParams();
+    const targetUrl = buildDownloadUrl(url, params);
+    const conditions = [];
+    if (params.month) conditions.push('年月: ' + params.month);
+    if (params.service) conditions.push('サービス: ' + params.service);
+    if (params.user) conditions.push('利用者: ' + params.user);
+    if (params.recordType) conditions.push('種別: ' + (params.recordType === 'support' ? '支援記録' : 'バイタル記録'));
+    const conditionText = conditions.length ? '\n\n【条件】\n' + conditions.join('\n') : '\n\n【条件】なし（全件）';
+
+    if (!confirm('Google Sheetsから記録をダウンロードしますか？' + conditionText + '\n\n※入力済みのアップロード待ち記録には影響しません')) {
+      return;
+    }
+
+    switchTab('view');
+
+    try {
+      showSyncStatus('⏳ 条件に一致するデータをダウンロード中...', true);
+      const response = await fetch(targetUrl);
+      const data = await response.json();
+
+      if (data.records) {
+        cloudRecords = data.records;
+        cloudRecords.forEach(r => { if (!r.id) r.id = generateRecordId(); });
+      } else {
+        cloudRecords = [];
+      }
+
+      if (data.masterUsers) masterUsers = data.masterUsers;
+      if (data.masterServices) masterServices = data.masterServices;
+      if (data.masterStaff) masterStaff = data.masterStaff;
+      if (data.masterSupportTypes) masterSupportTypes = data.masterSupportTypes;
+      if (data.masterConditions) masterConditions = data.masterConditions;
+      if (data.masterLocations) masterLocations = data.masterLocations;
+      if (data.masterActivityTypes) masterActivityTypes = data.masterActivityTypes;
+      if (data.supportConditionMap) supportConditionMap = data.supportConditionMap;
+      saveMasterData();
+
+      updateFilterOptions();
+      applyDownloadFiltersToView(params);
+      filtered = [...cloudRecords];
+      renderTable();
+      renderMasterLists();
+
+      const cloudInfo = document.getElementById('cloudRecordInfo');
+      if (cloudInfo) {
+        cloudInfo.textContent = conditions.length
+          ? `✓ ${cloudRecords.length}件ダウンロード済み（${conditions.join(' / ')}）`
+          : `✓ ${cloudRecords.length}件ダウンロード済み`;
+      }
+
+      showSyncStatus(`✓ ${cloudRecords.length}件のデータをダウンロードしました`, true);
+    } catch (error) {
+      showSyncStatus('✗ ダウンロードに失敗しました: ' + error.message, false);
+    }
+  }
+  
+  // 後方互換性のためエイリアスを残す
+  async function syncToCloud() { await uploadLocalRecords(); }
+  async function syncFromCloud() { await downloadCloudRecords(); }
+  
+  // マスターデータ追加関数
+  function addUser() {
+    const name = document.getElementById('newUserName').value.trim();
+    const service = document.getElementById('newUserService').value;
+    
+    if (!name || !service) {
+      alert('利用者名とサービス区分を入力してください');
+      return;
+    }
+    
+    masterUsers.push({ name, service });
+    saveMasterData();
+    renderMasterLists();
+    
+    document.getElementById('newUserName').value = '';
+    document.getElementById('newUserService').value = '';
+  }
+  
+  function deleteUser(index) {
+    if (confirm('この利用者を削除しますか？')) {
+      masterUsers.splice(index, 1);
+      saveMasterData();
+      renderMasterLists();
+    }
+  }
+  
+  function addService() {
+    const service = document.getElementById('newService').value.trim();
+    if (!service) {
+      alert('サービス区分を入力してください');
+      return;
+    }
+    
+    if (masterServices.includes(service)) {
+      alert('すでに登録されています');
+      return;
+    }
+    
+    masterServices.push(service);
+    saveMasterData();
+    renderMasterLists();
+    updateFilterOptions();
+    
+    document.getElementById('newService').value = '';
+  }
+  
+  function deleteService(index) {
+    if (confirm('このサービス区分を削除しますか？')) {
+      masterServices.splice(index, 1);
+      saveMasterData();
+      renderMasterLists();
+      updateFilterOptions();
+    }
+  }
+  
+  function addStaff() {
+    const staff = document.getElementById('newStaff').value.trim();
+    if (!staff) {
+      alert('記録者名を入力してください');
+      return;
+    }
+    
+    if (masterStaff.includes(staff)) {
+      alert('すでに登録されています');
+      return;
+    }
+    
+    masterStaff.push(staff);
+    saveMasterData();
+    renderMasterLists();
+    
+    document.getElementById('newStaff').value = '';
+  }
+  
+  function deleteStaff(index) {
+    if (confirm('この記録者を削除しますか？')) {
+      masterStaff.splice(index, 1);
+      saveMasterData();
+      renderMasterLists();
+    }
+  }
+  
+  function addSupportType() {
+    const type = document.getElementById('newSupportType').value.trim();
+    if (!type) {
+      alert('支援内容を入力してください');
+      return;
+    }
+    
+    if (masterSupportTypes.includes(type)) {
+      alert('すでに登録されています');
+      return;
+    }
+    
+    masterSupportTypes.push(type);
+    saveMasterData();
+    renderMasterLists();
+    
+    document.getElementById('newSupportType').value = '';
+  }
+  
+  function deleteSupportType(index) {
+    if (confirm('この支援内容を削除しますか？')) {
+      const type = masterSupportTypes[index];
+      masterSupportTypes.splice(index, 1);
+      delete supportConditionMap[type];
+      saveMasterData();
+      renderMasterLists();
+    }
+  }
+  
+  function addCondition() {
+    const condition = document.getElementById('newCondition').value.trim();
+    if (!condition) {
+      alert('様子・状態を入力してください');
+      return;
+    }
+    
+    if (masterConditions.includes(condition)) {
+      alert('すでに登録されています');
+      return;
+    }
+    
+    masterConditions.push(condition);
+    saveMasterData();
+    renderMasterLists();
+    
+    document.getElementById('newCondition').value = '';
+  }
+  
+  function deleteCondition(index) {
+    if (confirm('この様子・状態を削除しますか？')) {
+      masterConditions.splice(index, 1);
+      saveMasterData();
+      renderMasterLists();
+    }
+  }
+  
+  function addLocation() {
+    const location = document.getElementById('newLocation').value.trim();
+    if (!location) {
+      alert('活動場所を入力してください');
+      return;
+    }
+    
+    if (masterLocations.includes(location)) {
+      alert('すでに登録されています');
+      return;
+    }
+    
+    masterLocations.push(location);
+    saveMasterData();
+    renderMasterLists();
+    
+    document.getElementById('newLocation').value = '';
+  }
+  
+  function deleteLocation(index) {
+    if (confirm('この活動場所を削除しますか？')) {
+      masterLocations.splice(index, 1);
+      saveMasterData();
+      renderMasterLists();
+    }
+  }
+  
+  function addActivityType() {
+    const type = document.getElementById('newActivityType').value.trim();
+    if (!type) {
+      alert('活動内容を入力してください');
+      return;
+    }
+    
+    if (masterActivityTypes.includes(type)) {
+      alert('すでに登録されています');
+      return;
+    }
+    
+    masterActivityTypes.push(type);
+    saveMasterData();
+    renderMasterLists();
+    
+    document.getElementById('newActivityType').value = '';
+  }
+  
+  function deleteActivityType(index) {
+    if (confirm('この活動内容を削除しますか？')) {
+      masterActivityTypes.splice(index, 1);
+      saveMasterData();
+      renderMasterLists();
+    }
+  }
+  
+  function addConditionMapping() {
+    const supportType = document.getElementById('mappingSupportType').value;
+    const condition = document.getElementById('mappingCondition').value;
+    
+    if (!supportType || !condition) {
+      alert('支援内容と様子・状態を選択してください');
+      return;
+    }
+    
+    if (!supportConditionMap[supportType]) {
+      supportConditionMap[supportType] = [];
+    }
+    
+    if (supportConditionMap[supportType].includes(condition)) {
+      alert('すでに登録されています');
+      return;
+    }
+    
+    supportConditionMap[supportType].push(condition);
+    saveMasterData();
+    renderMasterLists();
+  }
+  
+  function renderMasterLists() {
+    // 利用者リスト
+    const userListEl = document.getElementById('userList');
+    userListEl.innerHTML = '';
+    masterUsers.forEach((user, index) => {
+      const item = document.createElement('div');
+      item.className = 'master-item';
+      item.innerHTML = `
+        <div class="master-item-info">
+          <div class="master-item-name">${user.name}</div>
+          <div class="master-item-detail">サービス区分: ${user.service}</div>
+        </div>
+        <button class="btn-delete" onclick="deleteUser(${index})">削除</button>
+      `;
+      userListEl.appendChild(item);
+    });
+    
+    // サービス区分の選択肢更新（利用者追加フォーム用）
+    const newUserServiceEl = document.getElementById('newUserService');
+    newUserServiceEl.innerHTML = '<option value="">サービス区分</option>';
+    masterServices.forEach(service => {
+      const option = document.createElement('option');
+      option.value = service;
+      option.textContent = service;
+      newUserServiceEl.appendChild(option);
+    });
+    
+    // サービス区分リスト
+    const serviceListEl = document.getElementById('serviceList');
+    serviceListEl.innerHTML = '';
+    masterServices.forEach((service, index) => {
+      const item = document.createElement('div');
+      item.className = 'master-item';
+      item.innerHTML = `
+        <div class="master-item-info">
+          <div class="master-item-name">${service}</div>
+        </div>
+        <button class="btn-delete" onclick="deleteService(${index})">削除</button>
+      `;
+      serviceListEl.appendChild(item);
+    });
+    
+    // 記録者リスト
+    const staffListEl = document.getElementById('staffList');
+    staffListEl.innerHTML = '';
+    masterStaff.forEach((staff, index) => {
+      const item = document.createElement('div');
+      item.className = 'master-item';
+      item.innerHTML = `
+        <div class="master-item-info">
+          <div class="master-item-name">${staff}</div>
+        </div>
+        <button class="btn-delete" onclick="deleteStaff(${index})">削除</button>
+      `;
+      staffListEl.appendChild(item);
+    });
+    
+    // 支援内容リスト
+    const supportTypeListEl = document.getElementById('supportTypeList');
+    supportTypeListEl.innerHTML = '';
+    masterSupportTypes.forEach((type, index) => {
+      const item = document.createElement('div');
+      item.className = 'master-item';
+      item.innerHTML = `
+        <div class="master-item-info">
+          <div class="master-item-name">${type}</div>
+        </div>
+        <button class="btn-delete" onclick="deleteSupportType(${index})">削除</button>
+      `;
+      supportTypeListEl.appendChild(item);
+    });
+    
+    // 様子・状態リスト
+    const conditionListEl = document.getElementById('conditionList');
+    conditionListEl.innerHTML = '';
+    masterConditions.forEach((condition, index) => {
+      const item = document.createElement('div');
+      item.className = 'master-item';
+      item.innerHTML = `
+        <div class="master-item-info">
+          <div class="master-item-name">${condition}</div>
+        </div>
+        <button class="btn-delete" onclick="deleteCondition(${index})">削除</button>
+      `;
+      conditionListEl.appendChild(item);
+    });
+    
+    // 連動設定用の支援内容選択肢
+    const mappingSupportTypeEl = document.getElementById('mappingSupportType');
+    mappingSupportTypeEl.innerHTML = '<option value="">支援内容を選択</option>';
+    masterSupportTypes.forEach(type => {
+      const option = document.createElement('option');
+      option.value = type;
+      option.textContent = type;
+      mappingSupportTypeEl.appendChild(option);
+    });
+    
+    // 連動設定用の様子・状態選択肢
+    const mappingConditionEl = document.getElementById('mappingCondition');
+    mappingConditionEl.innerHTML = '';
+    masterConditions.forEach(cond => {
+      const option = document.createElement('option');
+      option.value = cond;
+      option.textContent = cond;
+      mappingConditionEl.appendChild(option);
+    });
+    
+    // 連動マッピング表示
+    const conditionMappingListEl = document.getElementById('conditionMappingList');
+    conditionMappingListEl.innerHTML = '';
+    Object.keys(supportConditionMap).forEach(supportType => {
+      const conditions = supportConditionMap[supportType];
+      const item = document.createElement('div');
+      item.className = 'master-item';
+      item.style.flexDirection = 'column';
+      item.style.alignItems = 'flex-start';
+      
+      let conditionChips = '';
+      conditions.forEach(cond => {
+        conditionChips += `<span class="condition-chip">${cond}</span>`;
+      });
+      
+      item.innerHTML = `
+        <div style="width: 100%;">
+          <div class="master-item-name" style="margin-bottom: 8px;">📝 ${supportType}</div>
+          <div class="master-item-mapping">
+            ${conditionChips}
+          </div>
+        </div>
+      `;
+      conditionMappingListEl.appendChild(item);
+    });
+    
+    // 活動場所リスト
+    const locationListEl = document.getElementById('locationList');
+    locationListEl.innerHTML = '';
+    masterLocations.forEach((location, index) => {
+      const item = document.createElement('div');
+      item.className = 'master-item';
+      item.innerHTML = `
+        <div class="master-item-info">
+          <div class="master-item-name">${location}</div>
+        </div>
+        <button class="btn-delete" onclick="deleteLocation(${index})">削除</button>
+      `;
+      locationListEl.appendChild(item);
+    });
+    
+    // 活動内容リスト
+    const activityTypeListEl = document.getElementById('activityTypeList');
+    activityTypeListEl.innerHTML = '';
+    masterActivityTypes.forEach((type, index) => {
+      const item = document.createElement('div');
+      item.className = 'master-item';
+      item.innerHTML = `
+        <div class="master-item-info">
+          <div class="master-item-name">${type}</div>
+        </div>
+        <button class="btn-delete" onclick="deleteActivityType(${index})">削除</button>
+      `;
+      activityTypeListEl.appendChild(item);
+    });
+  }
+  
+  function updateUserOptions(selectElement, serviceValue) {
+    const row = selectElement.closest('.basic-info-row');
+    if (!row) return;
+    
+    const userSelect = row.querySelector('.row-user');
+    if (!userSelect) return;
+    
+    userSelect.innerHTML = '<option value="">利用者を選択</option>';
+    
+    if (serviceValue) {
+      const filteredUsers = masterUsers.filter(u => u.service === serviceValue);
+      filteredUsers.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.name;
+        option.textContent = user.name;
+        userSelect.appendChild(option);
+      });
+    }
+  }
+  
+  // 支援内容選択時に様子状態を連動更新
+  function updateConditionOptions(supportTypeSelect) {
+    const supportType = supportTypeSelect.value;
+    const row = supportTypeSelect.closest('.support-content-row');
+    if (!row) return;
+    
+    const condSelects = row.querySelectorAll('select[class*="row-cond-"]');
+    condSelects.forEach(condSelect => {
+      const currentValue = condSelect.value;
+      condSelect.innerHTML = '<option value="">選択</option>';
+      
+      if (supportType && supportConditionMap[supportType]) {
+        supportConditionMap[supportType].forEach(cond => {
+          const option = document.createElement('option');
+          option.value = cond;
+          option.textContent = cond;
+          condSelect.appendChild(option);
+        });
+        if (supportConditionMap[supportType].includes(currentValue)) {
+          condSelect.value = currentValue;
+        }
+      } else {
+        masterConditions.forEach(cond => {
+          const option = document.createElement('option');
+          option.value = cond;
+          option.textContent = cond;
+          condSelect.appendChild(option);
+        });
+        condSelect.value = currentValue;
+      }
+    });
+  }
+  
+  // 入力タイプ切り替え
+  function toggleInputType(rowId) {
+    const row = document.getElementById(`input-row-${rowId}`);
+    if (!row) return;
+    
+    const supportArea = row.querySelector('.support-input-area');
+    const vitalArea = row.querySelector('.vital-input-area');
+    const toggleBtn = row.querySelector('.btn-toggle');
+    
+    if (supportArea.classList.contains('active')) {
+      supportArea.classList.remove('active');
+      vitalArea.classList.add('active');
+      toggleBtn.textContent = '📝 支援内容入力へ切替';
+      toggleBtn.classList.add('active');
+    } else {
+      vitalArea.classList.remove('active');
+      supportArea.classList.add('active');
+      toggleBtn.textContent = '🏥 バイタル入力へ切替';
+      toggleBtn.classList.remove('active');
+    }
+  }
+  
+  // 支援内容を作成
+  function createSupportContent(rowId, supportIndex) {
+    let typeOptions = '<option value="">選択</option>';
+    masterSupportTypes.forEach(type => {
+      typeOptions += `<option value="${type}">${type}</option>`;
+    });
+    
+    let condOptions = '<option value="">選択</option>';
+    masterConditions.forEach(cond => {
+      condOptions += `<option value="${cond}">${cond}</option>`;
+    });
+    
+    let locationOptions = '<option value="">選択</option>';
+    masterLocations.forEach(location => {
+      locationOptions += `<option value="${location}">${location}</option>`;
+    });
+    
+    let activityOptions = '<option value="">選択</option>';
+    masterActivityTypes.forEach(activity => {
+      activityOptions += `<option value="${activity}">${activity}</option>`;
+    });
+    
+    const supportDiv = document.createElement('div');
+    supportDiv.className = 'support-content-row';
+    supportDiv.id = `support-${rowId}-${supportIndex}`;
+    
+    supportDiv.innerHTML = `
+      <div class="input-field">
+        <label>
+          ${supportIndex === 1 ? '<span class="support-number">支援' + supportIndex + '</span> ' : ''}支援内容${supportIndex === 1 ? '<span class="required">*</span>' : ''}
+        </label>
+        <select class="row-type-${supportIndex}" ${supportIndex === 1 ? 'required' : ''} onchange="updateConditionOptions(this)">
+          ${typeOptions}
+        </select>
+      </div>
+      
+      <div class="input-field">
+        <label>時間</label>
+        <div class="input-field-time">
+          <input type="time" class="row-start-time-${supportIndex}">
+          <span>〜</span>
+          <input type="time" class="row-end-time-${supportIndex}">
+        </div>
+      </div>
+      
+      <div class="input-field">
+        <label>様子</label>
+        <select class="row-cond-${supportIndex}">
+          ${condOptions}
+        </select>
+      </div>
+      
+      <div class="input-field">
+        <label>場所</label>
+        <select class="row-location-${supportIndex}">
+          ${locationOptions}
+        </select>
+      </div>
+      
+      <div class="input-field">
+        <label>活動</label>
+        <select class="row-activity-${supportIndex}">
+          ${activityOptions}
+        </select>
+      </div>
+      
+      <div class="input-field">
+        <label>
+          詳細
+          <button type="button" class="btn-voice" onclick="startVoiceInput(this.closest('.input-field').querySelector('textarea'))" title="音声">🎤</button>
+        </label>
+        <textarea class="row-detail-${supportIndex}" placeholder="詳細"></textarea>
+      </div>
+      
+      <div class="input-field">
+        <label>
+          特記
+          <button type="button" class="btn-voice" onclick="startVoiceInput(this.closest('.input-field').querySelector('textarea'))" title="音声">🎤</button>
+        </label>
+        <textarea class="row-note-${supportIndex}" placeholder="特記"></textarea>
+      </div>
+      
+      ${supportIndex > 1 ? `
+      <div class="support-actions">
+        <button type="button" class="btn btn-remove" onclick="removeSupportContent(${rowId}, ${supportIndex})">✕ 削除</button>
+      </div>
+      ` : ''}
+    `;
+    
+    return supportDiv;
+  }
+  
+  // 支援内容を追加
+  function addSupportContent(rowId) {
+    const row = document.getElementById(`input-row-${rowId}`);
+    if (!row) return;
+    
+    const supportSection = row.querySelector('.support-content-section');
+    if (!supportSection) return;
+    
+    const currentCount = supportCounterMap[rowId] || 1;
+    const newIndex = currentCount + 1;
+    
+    const newSupport = createSupportContent(rowId, newIndex);
+    
+    const addButton = supportSection.querySelector('.support-add-button');
+    supportSection.insertBefore(newSupport, addButton);
+    
+    supportCounterMap[rowId] = newIndex;
+    
+    setTimeout(() => {
+      newSupport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+  
+  // 支援内容を削除
+  function removeSupportContent(rowId, supportIndex) {
+    if (!confirm('この支援内容を削除しますか？')) {
+      return;
+    }
+    
+    const supportDiv = document.getElementById(`support-${rowId}-${supportIndex}`);
+    if (supportDiv) {
+      supportDiv.remove();
+    }
+  }
+  
+  // バイタル測定を作成
+  function createVitalEntry(rowId, vitalIndex) {
+    const vitalDiv = document.createElement('div');
+    vitalDiv.className = 'vital-entry';
+    vitalDiv.id = `vital-${rowId}-${vitalIndex}`;
+    
+    vitalDiv.innerHTML = `
+      <div class="vital-header">
+        <span class="vital-number">測定${vitalIndex}</span>
+        <div class="vital-time">
+          <label style="margin: 0;">測定時刻:</label>
+          <input type="time" class="row-vital-time-${vitalIndex}">
+        </div>
+      </div>
+      
+      <div class="vital-grid">
+        <div class="vital-field">
+          <label>体温 (℃)</label>
+          <input type="number" step="0.1" class="row-vital-temp-${vitalIndex}" placeholder="36.5">
+        </div>
+        <div class="vital-field">
+          <label>血圧 (上)</label>
+          <input type="number" class="row-vital-bp-sys-${vitalIndex}" placeholder="120">
+        </div>
+        <div class="vital-field">
+          <label>血圧 (下)</label>
+          <input type="number" class="row-vital-bp-dia-${vitalIndex}" placeholder="80">
+        </div>
+        <div class="vital-field">
+          <label>脈拍 (回/分)</label>
+          <input type="number" class="row-vital-pulse-${vitalIndex}" placeholder="70">
+        </div>
+        <div class="vital-field">
+          <label>SpO2 (%)</label>
+          <input type="number" class="row-vital-spo2-${vitalIndex}" placeholder="98">
+        </div>
+        <div class="vital-field">
+          <label>呼吸数 (回/分)</label>
+          <input type="number" class="row-vital-resp-${vitalIndex}" placeholder="16">
+        </div>
+      </div>
+      
+      <div class="input-field" style="margin-top: 12px;">
+        <label>
+          バイタル特記事項
+          <button type="button" class="btn-voice" onclick="startVoiceInput(this.closest('.input-field').querySelector('textarea'))" title="音声入力">🎤</button>
+        </label>
+        <textarea class="row-vital-note-${vitalIndex}" placeholder="バイタルに関する特記事項"></textarea>
+      </div>
+      
+      ${vitalIndex > 1 ? `
+      <div class="support-actions">
+        <button type="button" class="btn btn-remove" onclick="removeVitalEntry(${rowId}, ${vitalIndex})">✕ この測定を削除</button>
+      </div>
+      ` : ''}
+    `;
+    
+    return vitalDiv;
+  }
+  
+  // バイタル測定を追加
+  function addVitalEntry(rowId) {
+    const row = document.getElementById(`input-row-${rowId}`);
+    if (!row) return;
+    
+    const vitalSection = row.querySelector('.vital-section');
+    if (!vitalSection) return;
+    
+    const currentCount = vitalCounterMap[rowId] || 1;
+    const newIndex = currentCount + 1;
+    
+    const newVital = createVitalEntry(rowId, newIndex);
+    
+    const addButton = vitalSection.querySelector('.vital-add-button');
+    vitalSection.insertBefore(newVital, addButton);
+    
+    vitalCounterMap[rowId] = newIndex;
+    
+    setTimeout(() => {
+      newVital.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+  
+  // バイタル測定を削除
+  function removeVitalEntry(rowId, vitalIndex) {
+    if (!confirm('この測定を削除しますか？')) {
+      return;
+    }
+    
+    const vitalDiv = document.getElementById(`vital-${rowId}-${vitalIndex}`);
+    if (vitalDiv) {
+      vitalDiv.remove();
+    }
+  }
+  
+  function createInputRow() {
+    const rowId = ++rowIdCounter;
+    const today = new Date().toISOString().split('T')[0];
+    
+    supportCounterMap[rowId] = 1;
+    vitalCounterMap[rowId] = 1;
+    
+    const row = document.createElement('div');
+    row.className = 'input-row';
+    row.id = `input-row-${rowId}`;
+    
+    let serviceOptions = '<option value="">選択</option>';
+    masterServices.forEach(service => {
+      serviceOptions += `<option value="${service}">${service}</option>`;
+    });
+    
+    let staffOptions = '<option value="">選択</option>';
+    masterStaff.forEach(staff => {
+      staffOptions += `<option value="${staff}">${staff}</option>`;
+    });
+    
+    row.innerHTML = `
+      <div class="basic-info-row">
+        <div class="input-field">
+          <label>記録日 <span class="required">*</span></label>
+          <input type="date" class="row-date" value="${today}" required>
+        </div>
+        
+        <div class="input-field">
+          <label>サービス区分 <span class="required">*</span></label>
+          <select class="row-service" required onchange="updateUserOptions(this, this.value)">
+            ${serviceOptions}
+          </select>
+        </div>
+        
+        <div class="input-field">
+          <label>利用者名 <span class="required">*</span></label>
+          <select class="row-user" required>
+            <option value="">利用者を選択</option>
+          </select>
+        </div>
+        
+        <div class="input-field">
+          <label>記録者名 <span class="required">*</span></label>
+          <select class="row-staff" required>
+            ${staffOptions}
+          </select>
+        </div>
+      </div>
+      
+      <button type="button" class="btn btn-toggle" onclick="toggleInputType(${rowId})">🏥 バイタル入力へ切替</button>
+      
+      <!-- 支援内容入力エリア -->
+      <div class="support-input-area active">
+        <div class="support-content-section">
+          <div class="support-label">
+            <span>📝 支援内容</span>
+            <button type="button" class="btn btn-add" onclick="addSupportContent(${rowId})">➕ 支援内容追加</button>
+          </div>
+          <div class="support-add-button"></div>
+        </div>
+      </div>
+      
+      <!-- バイタル入力エリア -->
+      <div class="vital-input-area">
+        <div class="vital-section">
+          <div class="support-label">
+            <span>🏥 バイタルサイン</span>
+            <button type="button" class="btn btn-add" onclick="addVitalEntry(${rowId})">➕ 測定追加</button>
+          </div>
+          <div class="vital-add-button"></div>
+        </div>
+      </div>
+      
+      <div class="row-actions">
+        <button type="button" class="btn btn-save" onclick="saveRow(${rowId})">✓ 保存</button>
+        <button type="button" class="btn btn-cancel" onclick="removeRow(${rowId})">✕ キャンセル</button>
+      </div>
+    `;
+    
+    const supportSection = row.querySelector('.support-content-section');
+    const firstSupport = createSupportContent(rowId, 1);
+    const supportAddButton = supportSection.querySelector('.support-add-button');
+    supportSection.insertBefore(firstSupport, supportAddButton);
+    
+    const vitalSection = row.querySelector('.vital-section');
+    const firstVital = createVitalEntry(rowId, 1);
+    const vitalAddButton = vitalSection.querySelector('.vital-add-button');
+    vitalSection.insertBefore(firstVital, vitalAddButton);
+    
+    return row;
+  }
+
+  function addInputRow() {
+    const container = document.getElementById('inputContainer');
+    const newRow = createInputRow();
+    container.appendChild(newRow);
+    newRow.classList.add('active');
+    
+    setTimeout(() => {
+      newRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const firstInput = newRow.querySelector('.row-date');
+      if (firstInput) firstInput.focus();
+    }, 100);
+  }
+
+  function removeRow(rowId) {
+    const row = document.getElementById(`input-row-${rowId}`);
+    if (row) {
+      row.remove();
+      delete supportCounterMap[rowId];
+      delete vitalCounterMap[rowId];
+    }
+  }
+
+  function saveRow(rowId) {
+    const row = document.getElementById(`input-row-${rowId}`);
+    if (!row) return;
+    
+    const date = row.querySelector('.row-date').value;
+    const service = row.querySelector('.row-service').value;
+    const user = row.querySelector('.row-user').value;
+    const staff = row.querySelector('.row-staff').value;
+    
+    if (!date || !service || !user || !staff) {
+      alert('必須項目（記録日、サービス区分、利用者名、記録者名）をすべて入力してください');
+      return;
+    }
+    
+    const supportArea = row.querySelector('.support-input-area');
+    const vitalArea = row.querySelector('.vital-input-area');
+    
+    let record = { 
+      id: editingRecordId || generateRecordId(),
+      date, 
+      service, 
+      user, 
+      staff 
+    };
+    
+    if (supportArea.classList.contains('active')) {
+      const type1 = row.querySelector('.row-type-1').value;
+      if (!type1) {
+        alert('支援内容1は必須です');
+        return;
+      }
+      
+      const supportContents = [];
+      const maxSupport = supportCounterMap[rowId] || 1;
+      
+      for (let i = 1; i <= maxSupport; i++) {
+        const typeEl = row.querySelector(`.row-type-${i}`);
+        if (!typeEl) continue;
+        
+        const type = typeEl.value;
+        if (type) {
+          const startTime = row.querySelector(`.row-start-time-${i}`)?.value || '';
+          const endTime = row.querySelector(`.row-end-time-${i}`)?.value || '';
+          const cond = row.querySelector(`.row-cond-${i}`)?.value || '';
+          const location = row.querySelector(`.row-location-${i}`)?.value || '';
+          const activity = row.querySelector(`.row-activity-${i}`)?.value || '';
+          const detail = row.querySelector(`.row-detail-${i}`)?.value.trim() || '';
+          const note = row.querySelector(`.row-note-${i}`)?.value.trim() || '';
+          
+          let timeRange = '';
+          if (startTime && endTime) {
+            timeRange = `${startTime}〜${endTime}`;
+          } else if (startTime) {
+            timeRange = `${startTime}〜`;
+          } else if (endTime) {
+            timeRange = `〜${endTime}`;
+          }
+          
+          supportContents.push({
+            type,
+            timeRange,
+            cond,
+            location,
+            activity,
+            detail,
+            note
+          });
+        }
+      }
+      
+      if (supportContents.length === 0) {
+        alert('少なくとも1つの支援内容を入力してください');
+        return;
+      }
+      
+      record.recordType = 'support';
+      record.supportContents = supportContents;
+      
+      alert(`✓ 支援記録を保存しました！（支援内容: ${supportContents.length}件）`);
+    }
+    else if (vitalArea.classList.contains('active')) {
+      const vitalMeasurements = [];
+      const maxVital = vitalCounterMap[rowId] || 1;
+      
+      for (let i = 1; i <= maxVital; i++) {
+        const timeEl = row.querySelector(`.row-vital-time-${i}`);
+        if (!timeEl) continue;
+        
+        const time = timeEl.value || '';
+        const temp = row.querySelector(`.row-vital-temp-${i}`)?.value || '';
+        const bpSys = row.querySelector(`.row-vital-bp-sys-${i}`)?.value || '';
+        const bpDia = row.querySelector(`.row-vital-bp-dia-${i}`)?.value || '';
+        const pulse = row.querySelector(`.row-vital-pulse-${i}`)?.value || '';
+        const spo2 = row.querySelector(`.row-vital-spo2-${i}`)?.value || '';
+        const resp = row.querySelector(`.row-vital-resp-${i}`)?.value || '';
+        const note = row.querySelector(`.row-vital-note-${i}`)?.value.trim() || '';
+        
+        if (temp || bpSys || bpDia || pulse || spo2 || resp) {
+          vitalMeasurements.push({
+            time,
+            temp,
+            bpSys,
+            bpDia,
+            pulse,
+            spo2,
+            resp,
+            note
+          });
+        }
+      }
+      
+      if (vitalMeasurements.length === 0) {
+        alert('少なくとも1つのバイタルサインを入力してください');
+        return;
+      }
+      
+      record.recordType = 'vital';
+      record.vitalMeasurements = vitalMeasurements;
+      
+      alert(`✓ バイタル記録を保存しました！（測定回数: ${vitalMeasurements.length}回）`);
+    }
+    
+    // 編集モードの場合：同じIDのまま更新対象として保存
+    if (editingRecordId) {
+      record._syncAction = 'update';
+      const cloudIdx = cloudRecords.findIndex(r => r.id === editingRecordId);
+      if (cloudIdx > -1) cloudRecords.splice(cloudIdx, 1);
+      filtered = filtered.filter(r => r.id !== editingRecordId);
+      const localIdx = records.findIndex(r => r.id === editingRecordId);
+      if (localIdx > -1) records.splice(localIdx, 1);
+      editingRecordId = null;
+      document.getElementById('editModeBanner').classList.remove('active');
+      records.push(record);
+      saveRecords();
+      renderLocalTable();
+      removeRow(rowId);
+      alert('✓ 記録を編集待ちとして保存しました。アップロードするとクラウド上の同じ記録IDが更新されます。');
+      return;
+    }
+
+    records.push(record);
+    saveRecords();
+    renderLocalTable();   // 入力タブのアップロード待ち一覧を更新
+    removeRow(rowId);
+    alert('✓ 記録を保存しました。入力タブの「アップロード待ち記録」からアップロードしてください。');
+  }
+
+  function renderTable() {
+    const tbody = document.querySelector('#recordTable tbody');
+    tbody.innerHTML = '';
+    
+    // 全選択チェックボックスをリセット
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
+    
+    // 削除ボタンを非表示
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) deleteBtn.style.display = 'none';
+
+    // 件数バッジを更新
+    const badge = document.getElementById('viewFilterCountBadge');
+    if (badge) badge.textContent = filtered.length + '件';
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px; color: #999;">記録がありません</td></tr>';
+      return;
+    }
+    
+    const sorted = [...filtered].sort((a, b) => b.date.localeCompare(a.date));
+    
+    sorted.forEach(r => {
+      const tr = document.createElement('tr');
+      
+      let contentHtml = '';
+      
+      if (r.recordType === 'support') {
+        r.supportContents.forEach((s, idx) => {
+          if (idx > 0) contentHtml += '<hr style="margin: 8px 0; border: none; border-top: 1px solid #ddd;">';
+          contentHtml += '<div style="margin-bottom: 5px;">';
+          contentHtml += `<strong>【${idx + 1}】${s.type}</strong><br>`;
+          if (s.timeRange) contentHtml += `⏰ ${s.timeRange}<br>`;
+          if (s.cond) contentHtml += `😊 ${s.cond}<br>`;
+          if (s.location) contentHtml += `📍 ${s.location}　`;
+          if (s.activity) contentHtml += `🎯 ${s.activity}<br>`;
+          if (s.detail) contentHtml += `📄 ${s.detail}<br>`;
+          if (s.note) contentHtml += `📌 ${s.note}`;
+          contentHtml += '</div>';
+        });
+      }
+      else if (r.recordType === 'vital') {
+        contentHtml += '<div style="background: #ffe0e0; padding: 8px; border-radius: 4px;"><strong>🏥 バイタルサイン</strong>';
+        r.vitalMeasurements.forEach((v, idx) => {
+          if (idx > 0) contentHtml += '<hr style="margin: 8px 0; border: none; border-top: 1px solid #ddd;">';
+          contentHtml += '<div style="margin-top: 6px;">';
+          if (v.time) contentHtml += `<strong>⏰ ${v.time}</strong><br>`;
+          if (v.temp) contentHtml += `体温: ${v.temp}℃　`;
+          if (v.bpSys && v.bpDia) contentHtml += `血圧: ${v.bpSys}/${v.bpDia}mmHg　`;
+          if (v.pulse) contentHtml += `脈拍: ${v.pulse}回/分　`;
+          if (v.spo2) contentHtml += `SpO2: ${v.spo2}%　`;
+          if (v.resp) contentHtml += `呼吸: ${v.resp}回/分　`;
+          if (v.note) contentHtml += `<br>📌 ${v.note}`;
+          contentHtml += '</div>';
+        });
+        contentHtml += '</div>';
+      }
+      
+      tr.innerHTML = `
+        <td><input type="checkbox" class="record-checkbox" data-record-id="${r.id || ''}" onchange="updateDeleteButton()"></td>
+        <td>${r.date}</td>
+        <td><span class="service-badge badge-${r.service}">${r.service}</span></td>
+        <td>${r.user}</td>
+        <td>${r.staff}</td>
+        <td style="min-width: 300px;">${contentHtml}</td>
+        <td style="white-space: nowrap;">
+          <button class="btn-edit-view" onclick="editRecord('${r.id || ''}')" title="編集（記録入力画面へ移動）">✏️ 編集</button>
+          <button class="btn-delete-view" onclick="deleteRecord('${r.id || ''}')" title="削除">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateFilterOptions() {
+    // 閲覧タブ用フィルターのサービス区分選択肢更新
+    const viewEl = document.getElementById('viewFilterService');
+    if (viewEl) {
+      viewEl.innerHTML = '<option value="">すべて</option>';
+      masterServices.forEach(service => {
+        const option = document.createElement('option');
+        option.value = service;
+        option.textContent = service;
+        viewEl.appendChild(option);
+      });
+    }
+  }
+
+  // 閲覧タブ用フィルター
+  function applyViewFilter() {
+    const month = document.getElementById('viewFilterMonth').value;
+    const service = document.getElementById('viewFilterService').value;
+    const user = document.getElementById('viewFilterUser').value.trim().toLowerCase();
+    const note = document.getElementById('viewFilterNote').value.trim().toLowerCase();
+    const detail = document.getElementById('viewFilterDetail').value.trim().toLowerCase();
+    const recType = document.getElementById('viewFilterType').value;
+
+    // cloudRecords（ダウンロード済み記録）を絞り込む
+    filtered = cloudRecords.filter(r => {
+      if (month && !r.date.startsWith(month)) return false;
+      if (service && r.service !== service) return false;
+      if (user && !r.user.toLowerCase().includes(user)) return false;
+      if (recType && r.recordType !== recType) return false;
+
+      // 特記事項キーワード
+      if (note) {
+        let found = false;
+        if (r.recordType === 'support') {
+          found = r.supportContents.some(s => (s.note || '').toLowerCase().includes(note));
+        } else if (r.recordType === 'vital') {
+          found = r.vitalMeasurements.some(v => (v.note || '').toLowerCase().includes(note));
+        }
+        if (!found) return false;
+      }
+
+      // 支援内容キーワード
+      if (detail) {
+        let found = false;
+        if (r.recordType === 'support') {
+          found = r.supportContents.some(s =>
+            (s.detail || '').toLowerCase().includes(detail) ||
+            (s.type || '').toLowerCase().includes(detail) ||
+            (s.activity || '').toLowerCase().includes(detail)
+          );
+        }
+        if (!found) return false;
+      }
+
+      return true;
+    });
+    
+    renderTable();
+  }
+
+  function resetViewFilter() {
+    document.getElementById('viewFilterMonth').value = '';
+    document.getElementById('viewFilterService').value = '';
+    document.getElementById('viewFilterUser').value = '';
+    document.getElementById('viewFilterNote').value = '';
+    document.getElementById('viewFilterDetail').value = '';
+    document.getElementById('viewFilterType').value = '';
+    filtered = [...cloudRecords];
+    renderTable();
+  }
+
+  // 互換性のため旧applyFilter/resetFilterも残す
+  function applyFilter() { applyViewFilter(); }
+  function resetFilter() { resetViewFilter(); }
+
+  function exportExcel() {
+    if (filtered.length === 0) {
+      alert('エクスポートする記録がありません');
+      return;
+    }
+    
+    const supportData = [['記録日', 'サービス区分', '利用者名', '記録者名', '支援内容', '時間', '様子・状態', '活動場所', '活動内容', '支援の詳細', '特記事項']];
+    
+    filtered.forEach(r => {
+      if (r.recordType === 'support') {
+        r.supportContents.forEach(s => {
+          supportData.push([
+            r.date,
+            r.service,
+            r.user,
+            r.staff,
+            s.type,
+            s.timeRange,
+            s.cond,
+            s.location,
+            s.activity,
+            s.detail,
+            s.note
+          ]);
+        });
+      }
+    });
+    
+    const vitalData = [['記録日', 'サービス区分', '利用者名', '記録者名', '測定時刻', '体温', '血圧(上)', '血圧(下)', '脈拍', 'SpO2', '呼吸数', '特記事項']];
+    
+    filtered.forEach(r => {
+      if (r.recordType === 'vital') {
+        r.vitalMeasurements.forEach(v => {
+          vitalData.push([
+            r.date,
+            r.service,
+            r.user,
+            r.staff,
+            v.time,
+            v.temp,
+            v.bpSys,
+            v.bpDia,
+            v.pulse,
+            v.spo2,
+            v.resp,
+            v.note
+          ]);
+        });
+      }
+    });
+    
+    const masterData = [['種別', 'データ']];
+    
+    masterData.push(['利用者', '']);
+    masterUsers.forEach(u => {
+      masterData.push(['', `${u.name}（${u.service}）`]);
+    });
+    
+    masterData.push(['サービス区分', '']);
+    masterServices.forEach(s => {
+      masterData.push(['', s]);
+    });
+    
+    masterData.push(['記録者', '']);
+    masterStaff.forEach(s => {
+      masterData.push(['', s]);
+    });
+    
+    const wb = XLSX.utils.book_new();
+    const wsSup = XLSX.utils.aoa_to_sheet(supportData);
+    const wsVit = XLSX.utils.aoa_to_sheet(vitalData);
+    const wsMas = XLSX.utils.aoa_to_sheet(masterData);
+    
+    XLSX.utils.book_append_sheet(wb, wsSup, '支援記録');
+    XLSX.utils.book_append_sheet(wb, wsVit, 'バイタル記録');
+    XLSX.utils.book_append_sheet(wb, wsMas, 'マスターデータ');
+    
+    const today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, `支援記録_${today}.xlsx`);
+    
+    alert('✓ Excelファイルをダウンロードしました（閲覧中の絞り込み結果: ' + filtered.length + '件）');
+  }
+
+  function clearAll() {
+    if (!confirm('アップロード待ちの入力記録をすべて削除します。\nよろしいですか？\n\n※閲覧中のクラウドデータには影響しません')) {
+      return;
+    }
+    
+    records = [];
+    saveRecords();
+    renderLocalTable();
+    alert('✓ 入力記録をすべて削除しました');
+  }
+
+  
+  
+  // 全選択/解除
+  function toggleSelectAll(checked) {
+    const checkboxes = document.querySelectorAll('.record-checkbox');
+    checkboxes.forEach(cb => {
+      cb.checked = checked;
+    });
+    updateDeleteButton();
+  }
+  
+  // 削除ボタンの表示/非表示と選択件数の更新
+  function updateDeleteButton() {
+    const checkboxes = document.querySelectorAll('.record-checkbox:checked');
+    const count = checkboxes.length;
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    const countSpan = document.getElementById('selectedCount');
+    
+    if (count > 0) {
+      deleteBtn.style.display = 'inline-flex';
+      countSpan.textContent = count;
+    } else {
+      deleteBtn.style.display = 'none';
+    }
+    
+    // 全選択チェックボックスの状態を更新
+    const allCheckboxes = document.querySelectorAll('.record-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = allCheckboxes.length > 0 && count === allCheckboxes.length;
+    }
+  }
+  
+  // 選択された記録を一括削除
+  function deleteSelected() {
+    const checkboxes = document.querySelectorAll('.record-checkbox:checked');
+    const count = checkboxes.length;
+    
+    if (count === 0) {
+      alert('削除する記録を選択してください');
+      return;
+    }
+    
+    if (!confirm(`選択した${count}件の記録を削除しますか？\n\n削除した記録は復元できません。`)) {
+      return;
+    }
+    
+    const idsToDelete = [];
+    checkboxes.forEach(cb => {
+      const recordId = cb.getAttribute('data-record-id');
+      if (recordId) {
+        idsToDelete.push(recordId);
+      }
+    });
+    
+    idsToDelete.forEach(recordId => {
+      const record = cloudRecords.find(r => r.id === recordId);
+      const existingLocalIdx = records.findIndex(r => r.id === recordId);
+      if (existingLocalIdx > -1) records.splice(existingLocalIdx, 1);
+      if (record) {
+        records.push({
+          id: recordId,
+          date: record.date || '',
+          service: record.service || '',
+          user: record.user || '',
+          staff: record.staff || '',
+          recordType: record.recordType || '',
+          _syncAction: 'delete'
+        });
+      }
+    });
+
+    cloudRecords = cloudRecords.filter(r => !idsToDelete.includes(r.id));
+    filtered = filtered.filter(r => !idsToDelete.includes(r.id));
+    saveRecords();
+    renderLocalTable();
+    renderTable();
+    
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+    }
+    
+    alert(`✓ ${count}件の削除指示をアップロード待ちに追加しました`);
+  }
+  
+  // 記録削除機能（閲覧タブ用：cloudRecords から削除）
+  function deleteRecord(recordId) {
+    if (!recordId) {
+      alert('記録IDが見つかりません');
+      return;
+    }
+
+    const record = cloudRecords.find(r => r.id === recordId);
+    if (!record) {
+      alert('記録が見つかりませんでした');
+      return;
+    }
+
+    if (!confirm('この記録を削除対象として登録しますか？\n\n削除指示は「記録入力」タブのアップロード待ち一覧に追加され、アップロード後にクラウドから削除されます。')) {
+      return;
+    }
+
+    cloudRecords = cloudRecords.filter(r => r.id !== recordId);
+    filtered = filtered.filter(r => r.id !== recordId);
+
+    const existingLocalIdx = records.findIndex(r => r.id === recordId);
+    if (existingLocalIdx > -1) records.splice(existingLocalIdx, 1);
+
+    records.push({
+      id: recordId,
+      date: record.date || '',
+      service: record.service || '',
+      user: record.user || '',
+      staff: record.staff || '',
+      recordType: record.recordType || '',
+      _syncAction: 'delete'
+    });
+
+    saveRecords();
+    renderLocalTable();
+    renderTable();
+    alert('✓ 削除指示をアップロード待ちに追加しました。入力タブからアップロードするとクラウドへ反映されます。');
+  }
+  
+  // 入力タブの記録を個別削除（アップロード前にキャンセルしたい場合）
+  function deleteLocalRecord(recordId) {
+    if (!recordId) return;
+    if (!confirm('この入力記録を削除しますか？')) return;
+    const index = records.findIndex(r => r.id === recordId);
+    if (index > -1) {
+      records.splice(index, 1);
+      saveRecords();
+      renderLocalTable();
+      alert('✓ 入力記録を削除しました');
+    }
+  }
+  
+  // =============================================
+  // タブ切り替え
+  // =============================================
+  function switchTab(tab) {
+    document.getElementById('tabInput').classList.toggle('active', tab === 'input');
+    document.getElementById('tabView').classList.toggle('active', tab === 'view');
+    document.getElementById('tabBtnInput').classList.toggle('active', tab === 'input');
+    document.getElementById('tabBtnView').classList.toggle('active', tab === 'view');
+    if (tab === 'view') {
+      // filtered は cloudRecords のサブセットとして再設定
+      if (filtered.length === 0 && cloudRecords.length > 0) {
+        filtered = [...cloudRecords];
+      }
+      renderTable();
+    }
+    if (tab === 'input') {
+      renderLocalTable();
+    }
+  }
+
+  // =============================================
+  // 編集モード管理
+  // =============================================
+
+  function cancelEditMode() {
+    editingRecordId = null;
+    document.getElementById('editModeBanner').classList.remove('active');
+    // 入力フォームをすべて削除
+    document.getElementById('inputContainer').innerHTML = '';
+  }
+
+  // ============================================================
+  // 記録入力タブ：アップロード待ち記録一覧を描画
+  // ============================================================
+  function renderLocalTable() {
+    const tbody = document.querySelector('#localRecordTable tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    
+    const badge = document.getElementById('localRecordCountBadge');
+    if (badge) badge.textContent = records.length + '件';
+
+    if (records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#999;">アップロード待ちの記録はありません</td></tr>';
+      return;
+    }
+    
+    const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date));
+    sorted.forEach(r => {
+      const tr = document.createElement('tr');
+      let contentHtml = '';
+      if (r._syncAction === 'delete') {
+        contentHtml = '<span style="background:#ffe8e8;color:#c62828;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">🗑️ 削除予定</span>';
+      } else if (r._syncAction === 'update') {
+        contentHtml += '<div style="margin-bottom:4px;"><span style="background:#fff4e5;color:#ef6c00;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:bold;">✏️ 更新予定</span></div>';
+        if (r.recordType === 'support') {
+          (r.supportContents || []).forEach((s, idx) => {
+            contentHtml += `<div style="font-size:13px;">【${idx+1}】${s.type}`;
+            if (s.note) contentHtml += ` / 📌${s.note}`;
+            contentHtml += '</div>';
+          });
+        } else if (r.recordType === 'vital') {
+          contentHtml += '<span style="background:#ffe0e0;padding:2px 8px;border-radius:4px;font-size:13px;">🏥 バイタル</span>';
+        }
+      } else if (r.recordType === 'support') {
+        (r.supportContents || []).forEach((s, idx) => {
+          contentHtml += `<div style="font-size:13px;">【${idx+1}】${s.type}`;
+          if (s.note) contentHtml += ` / 📌${s.note}`;
+          contentHtml += '</div>';
+        });
+      } else if (r.recordType === 'vital') {
+        contentHtml = '<span style="background:#ffe0e0;padding:2px 8px;border-radius:4px;font-size:13px;">🏥 バイタル</span>';
+      }
+      tr.innerHTML = `
+        <td>${r.date}</td>
+        <td><span class="service-badge badge-${r.service}" style="font-size:12px;">${r.service}</span></td>
+        <td>${r.user}</td>
+        <td>${r.staff}</td>
+        <td>${contentHtml}</td>
+        <td><button class="btn-delete-view" onclick="deleteLocalRecord('${r.id || ''}')" title="削除">🗑️</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // 記録編集機能（記録入力タブへ移動して既存データを展開）
+  function editRecord(recordId) {
+    if (!recordId) {
+      alert('記録IDが見つかりません');
+      return;
+    }
+    
+    // 閲覧タブからの編集：cloudRecords を検索
+    const record = cloudRecords.find(r => r.id === recordId);
+    if (!record) {
+      alert('記録が見つかりませんでした');
+      return;
+    }
+
+    if (!confirm(`この記録を編集します。\n\n記録日: ${record.date}\n利用者: ${record.user}\n\n「記録入力」タブに移動して内容を確認・修正後、保存してください。\n（元の記録は保存ボタンを押すと自動的に削除されます）`)) {
+      return;
+    }
+
+    // 記録入力タブへ切り替え
+    switchTab('input');
+
+    // 既存フォームをクリア
+    document.getElementById('inputContainer').innerHTML = '';
+
+    // 編集モードセット
+    editingRecordId = recordId;
+    document.getElementById('editModeBanner').classList.add('active');
+
+    // 新規行を作成してデータを流し込む
+    const newRow = createInputRow();
+    document.getElementById('inputContainer').appendChild(newRow);
+    newRow.classList.add('active');
+
+    // 基本情報をセット
+    newRow.querySelector('.row-date').value = record.date;
+
+    // サービス区分
+    const serviceSelect = newRow.querySelector('.row-service');
+    setTimeout(() => {
+      serviceSelect.value = record.service;
+      // 利用者選択肢更新後にセット
+      updateUserSelect(newRow, record.service, record.user);
+    }, 50);
+
+    // 記録者
+    const staffSelect = newRow.querySelector('.row-staff');
+    setTimeout(() => { staffSelect.value = record.staff; }, 100);
+
+    if (record.recordType === 'support') {
+      // 支援記録タブを選択
+      const toggleBtn = newRow.querySelector('.btn-toggle');
+      if (toggleBtn && !newRow.querySelector('.support-input-area').classList.contains('active')) {
+        toggleBtn.click();
+      }
+      // 支援内容を流し込む
+      setTimeout(() => {
+        populateEditSupportContents(newRow, record.supportContents);
+      }, 200);
+    } else if (record.recordType === 'vital') {
+      // バイタルタブを表示（2番目のトグルボタンを探す）
+      const vitBtn = newRow.querySelector('[onclick*="toggleVital"]') ||
+                     Array.from(newRow.querySelectorAll('.btn-toggle')).find(b => b.textContent.includes('バイタル'));
+      if (vitBtn) {
+        setTimeout(() => { vitBtn.click(); }, 50);
+      }
+    }
+
+    newRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function populateEditSupportContents(row, supportContents) {
+    const supportArea = row.querySelector('.support-input-area');
+    if (!supportArea) return;
+    const container = supportArea.querySelector('.support-content-section') ||
+                      supportArea.querySelector('[id^="support-container-"]');
+    
+    // 既存の行を取得（最初の1行は既に存在している）
+    const existingRows = row.querySelectorAll('.support-content-row');
+    
+    supportContents.forEach((s, idx) => {
+      let supportRow;
+      if (idx === 0 && existingRows.length > 0) {
+        supportRow = existingRows[0];
+      } else {
+        // 追加ボタンをクリックして行を増やす
+        const addBtn = supportArea.querySelector('[onclick*="addSupportContent"]');
+        if (addBtn) addBtn.click();
+        const allRows = row.querySelectorAll('.support-content-row');
+        supportRow = allRows[allRows.length - 1];
+      }
+      if (!supportRow) return;
+
+      const typeSelect = supportRow.querySelector('select');
+      if (typeSelect) typeSelect.value = s.type;
+
+      const timeInputs = supportRow.querySelectorAll('input[type="time"]');
+      if (s.timeRange) {
+        const parts = s.timeRange.split('〜');
+        if (timeInputs[0]) timeInputs[0].value = (parts[0] || '').trim();
+        if (timeInputs[1]) timeInputs[1].value = (parts[1] || '').trim();
+      }
+
+      const selects = supportRow.querySelectorAll('select');
+      // selects[0]=支援内容, [1]=様子, [2]=場所, [3]=活動
+      if (selects[1]) selects[1].value = s.cond || '';
+      if (selects[2]) selects[2].value = s.location || '';
+      if (selects[3]) selects[3].value = s.activity || '';
+
+      const textareas = supportRow.querySelectorAll('textarea');
+      if (textareas[0]) textareas[0].value = s.detail || '';
+      if (textareas[1]) textareas[1].value = s.note || '';
+    });
+  }
+
+  function updateUserSelect(row, service, userName) {
+    const serviceSelect = row.querySelector('.row-service');
+    if (serviceSelect) serviceSelect.value = service;
+    // サービス区分変更イベントを発火して利用者リストを更新
+    const event = new Event('change');
+    if (serviceSelect) serviceSelect.dispatchEvent(event);
+    setTimeout(() => {
+      const userSelect = row.querySelector('.row-user');
+      if (userSelect) userSelect.value = userName;
+    }, 100);
+  }
+
+  // saveRowをラップして編集モード時は元記録を削除してから保存
+  const _originalSaveRow = typeof saveRow !== 'undefined' ? saveRow : null;
+  
+  // ページ読み込み時の処理
+  document.addEventListener('DOMContentLoaded', () => {
+    // セッションチェック
+    checkSession();
+    
+    // 既存データにIDを付与
+    ensureRecordIds();
+    
+    // データ読み込み
+    loadMasterData();
+    renderLocalTable();    // 入力タブのアップロード待ちリスト描画
+    updateFilterOptions();
+    populateDownloadFilterOptions();
+    initSpeechRecognition();
+    // QRコード生成（ログイン画面用）
+    generateQRCode();
+  });
+
+  // ============================================================
+  // QRコード生成（Canvas APIで外部ライブラリ不要）
+  // ============================================================
+  function generateQRCode() {
+    // URLを取得（file://の場合はフォールバックメッセージを表示）
+    var url = window.location.href;
+    var wrap = document.querySelector('.qr-canvas-wrap');
+    var hint = document.getElementById('qrUrlHint');
+
+    if (hint) {
+      var short = url.length > 80 ? url.substring(0, 77) + '...' : url;
+      hint.textContent = short;
+    }
+    if (!wrap) return;
+
+    // file:// プロトコルの場合はQRコードを生成しても意味がないのでメッセージ表示
+    if (url.indexOf('file://') === 0) {
+      wrap.innerHTML = '<div style="padding:10px;text-align:center;color:#888;font-size:12px;">⚠️ ローカルファイルではQRコードを表示できません。<br>WebサーバーまたはGoogle Driveで開いてください。</div>';
+      return;
+    }
+
+    // ── 方法①: qrcodejs CDN ──
+    if (typeof QRCode !== 'undefined') {
+      try {
+        wrap.innerHTML = '';
+        new QRCode(wrap, { text: url, width: 200, height: 200, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+        return;
+      } catch(e) { console.warn('qrcodejs失敗:', e); }
+    }
+
+    // ── 方法②: Google Chart API ──
+    try {
+      var encoded = encodeURIComponent(url);
+      var img = document.createElement('img');
+      img.src = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&choe=UTF-8&chl=' + encoded;
+      img.width = 200; img.height = 200; img.alt = 'QRコード';
+      img.style.cssText = 'display:block;margin:0 auto;';
+      img.onerror = function() { _showQrTextFallback(wrap, url); };
+      wrap.innerHTML = '';
+      wrap.appendChild(img);
+      return;
+    } catch(e) { console.warn('Chart API失敗:', e); }
+
+    // ── 方法③: URLコピーボタン ──
+    _showQrTextFallback(wrap, url);
+  }
+
+  function _showQrTextFallback(wrap, url) {
+    var div = document.createElement('div');
+    div.style.cssText = 'padding:12px;background:#f8f8f8;border:1px solid #ccc;border-radius:6px;text-align:center;font-size:12px;word-break:break-all;';
+    var title = document.createElement('p');
+    title.style.cssText = 'margin:0 0 6px;font-weight:bold;font-size:13px;';
+    title.textContent = '📋 このページのURL';
+    var urlText = document.createElement('p');
+    urlText.style.cssText = 'margin:0 0 8px;color:#2c5aa0;font-size:11px;';
+    urlText.textContent = url;
+    var copyBtn = document.createElement('button');
+    copyBtn.textContent = 'URLをコピー';
+    copyBtn.style.cssText = 'padding:6px 14px;background:#2c5aa0;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;';
+    copyBtn.addEventListener('click', function() {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function() { alert('URLをコピーしました'); });
+      } else {
+        prompt('URLをコピーしてください:', url);
+      }
+    });
+    div.appendChild(title);
+    div.appendChild(urlText);
+    div.appendChild(copyBtn);
+    wrap.innerHTML = '';
+    wrap.appendChild(div);
+  }
+
+
+  // createQR: generateQRCode内で処理に統合
+
+
+  // モーダルの外側クリックで閉じる
+  window.onclick = function(event) {
+    const masterModal = document.getElementById('masterModal');
+    const syncModal = document.getElementById('syncModal');
+    const batchModal = document.getElementById('batchModal');
+    
+    if (event.target === masterModal) {
+      closeMasterModal();
+    }
+    if (event.target === syncModal) {
+      closeSyncModal();
+    }
+    if (event.target === batchModal) {
+      closeBatchModal();
+    }
+  }
+</script>
+</body>
+</html>
